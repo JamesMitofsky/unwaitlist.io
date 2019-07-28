@@ -10,6 +10,7 @@ Gotta scrape and send that waitlist info
     3. > advanced tools (Kudu)
     4. > debug console (located in navbar)
     5. > run npm installs for dependencies
+- Using Environment Variables in Azure: https://www.freecodecamp.org/news/heres-how-you-can-actually-use-node-environment-variables-8fdf98f53a0a/
 
 
 #### NodeMailer
@@ -22,6 +23,11 @@ Gotta scrape and send that waitlist info
 
 - Text to speech docs: https://www.twilio.com/docs/voice/twiml/say/text-speech
 - Twimlet Echo, URL builder: https://www.twilio.com/labs/twimlets/echo
+
+
+
+##### dotenv
+- https://www.npmjs.com/package/dotenv
 
 
 
