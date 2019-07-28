@@ -86,3 +86,5 @@ typings/
 
 # DynamoDB Local files
 .dynamodb/
+scraping-and-sending-a8b65707392e.json
+auth-credentials.json
