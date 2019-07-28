@@ -1,4 +1,4 @@
-# taskCat
+# unwaitlist
 Gotta scrape and send that waitlist info
 
 

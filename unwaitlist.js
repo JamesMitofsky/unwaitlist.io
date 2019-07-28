@@ -1,7 +1,9 @@
-// dependencies: npm install require cheerio, npm install nodemailer, npm install twilio
+// dependencies: npm install require cheerio, npm install nodemailer, npm install twilio, npm install dotenv
 
 const request = require("request");
 const cheerio = require("cheerio");
+// initialize dotenv
+require('dotenv').config()
 
 // declare array of pages to check
 pagesList = ["https://www.uvm.edu/academics/courses/?term=201909&crn=90429", "https://www.uvm.edu/academics/courses/?term=201909&crn=90225", "https://www.uvm.edu/academics/courses/?term=201909&crn=93187"]
@@ -48,8 +50,10 @@ for (page of pagesList) {
             console.log(courseURL(crnNumber))
 
 
-            // print availability to console
-            if (availableSeats > 0) {
+
+
+            // conditional reveresed for testing
+            if (availableSeats < 0) {
                 console.log(`THERE ARE ${availableSeats} AVAILABLE SEATS!`, "\t" + crnNumber)
             } else if (availableSeats === 0) {
                 console.log(`${crnNumber} is fully enrolled`)
@@ -66,8 +70,8 @@ for (page of pagesList) {
                 var transporter = nodemailer.createTransport({
                     service: 'gmail',
                     auth: {
-                        user: 'kingofpowerhouses@gmail.com',
-                        pass: 'thissortaworks2000'
+                        user: process.env.EMAIL_USER,
+                        pass: process.env.EMAIL_PASS
                     }
                 });
                 // send email if class has space
@@ -86,12 +90,12 @@ for (page of pagesList) {
                     }
                 });
 
-                // begin working with twilio: npm install twilio
-                const accountSid = 'AC053c2bb72f89cf01b19dd31479b91763';
-                const authToken = 'd67cea20b5a6fbf380d952e5cf34a570';
+                // begin working with twilio
+                const accountSid = process.env.TWILIO_SID;
+                const authToken = process.env.TWILIO_TOKEN;
                 const client = require('twilio')(accountSid, authToken);
 
-                // call content: "<Response><Say voice="Polly.Joanna">Time to sign up for class!</Say></Response>"
+                // transcript from twilio call: "<Response><Say voice="Polly.Joanna">Time to sign up for class!</Say></Response>"
                 client.calls
                     .create({
                         url: 'https://twimlets.com/echo?Twiml=%3CResponse%3E%0A%3CSay%20voice%3D%22Polly.Joanna%22%3ETime%20to%20sign%20up%20for%20class!%3C%2FSay%3E%0A%3C%2FResponse%3E&',
@@ -108,8 +112,8 @@ for (page of pagesList) {
                 var transporter = nodemailer.createTransport({
                     service: 'gmail',
                     auth: {
-                        user: 'kingofpowerhouses@gmail.com',
-                        pass: 'thissortaworks2000'
+                        user: process.env.EMAIL_USER,
+                        pass: process.env.EMAIL_PASS
                     }
                 });
 
