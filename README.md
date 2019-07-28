@@ -5,11 +5,11 @@ Gotta scrape and send that waitlist info
 #### Azure Functions
 - Timer function: https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-timer
 - KUDU debug console for adding dependencies: https://blogs.msdn.microsoft.com/benjaminperkins/2014/03/24/using-kudu-with-windows-azure-web-sites/
-    1. select function
+    1. > select function
     2. > platform features
     3. > advanced tools (Kudu)
     4. > debug console (located in navbar)
-    5. run npm installs for dependencies
+    5. > run npm installs for dependencies
 
 
 #### NodeMailer
