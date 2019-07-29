@@ -1,6 +1,13 @@
 # unwaitlist
 Gotta scrape and send that waitlist info
 
+#### dependency installs
+- npm install require cheerio
+- npm install nodemailer
+- npm install twilio
+- npm install dotenv
+> Single-line install: npm install require cheerio nodemailer twilio dotenv
+
 
 #### Azure Functions
 - Timer function: https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-timer
@@ -30,11 +37,11 @@ Gotta scrape and send that waitlist info
 
 
 
-##### dotenv
+#### dotenv
 - https://www.npmjs.com/package/dotenv
 
 
 
-#### Misc. Notes
+#### Considerations beyond the code
 - Setup email filter to move 'online status confirmed' emails from inbox to folder without notification
 - Set Twilio number as emergency contact which can override Do Not Disturb and Silent
