@@ -8,7 +8,7 @@ Gotta scrape 'n send that waitlist info
 
 # Project Resource Catalog
 
-### Azure Functions - free, cloud-based execution
+### Azure Functions: free, cloud-based execution
 - Timer function: https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-timer
 - KUDU debug console for adding dependencies: https://blogs.msdn.microsoft.com/benjaminperkins/2014/03/24/using-kudu-with-windows-azure-web-sites/
     1. > select function
@@ -23,18 +23,18 @@ Gotta scrape 'n send that waitlist info
     4. > add as application setting (as deployment)
 
 
-### NodeMailer - email
+### NodeMailer: email
 - Quick start: https://www.w3schools.com/nodejs/nodejs_email.asp
 - In Google Settings, make account available to "Less Secure" apps
 
 
-### Twilio - phone calls
+### Twilio: web-based phone calls
 - Outbound call quickstart: https://www.twilio.com/docs/voice/quickstart/node?code-sample=code-make-an-outbound-call&code-language=Node.js&code-sdk-version=3.x
 - Text to speech docs: https://www.twilio.com/docs/voice/twiml/say/text-speech
 - Twimlet Echo, URL builder: https://www.twilio.com/labs/twimlets/echo
 
 
-### dotenv - protecting sensative variables
+### dotenv: protecting sensitive variables
 - https://www.npmjs.com/package/dotenv
 
 
