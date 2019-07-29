@@ -11,6 +11,10 @@ Gotta scrape and send that waitlist info
     4. > debug console (located in navbar)
     5. > run npm installs for dependencies
 - Using Environment Variables in Azure: https://www.freecodecamp.org/news/heres-how-you-can-actually-use-node-environment-variables-8fdf98f53a0a/
+    1. > select function
+    2. > platform features
+    3. > configuration
+    4. > add as application setting (as deployment)
 
 
 #### NodeMailer
