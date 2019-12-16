@@ -88,3 +88,4 @@ typings/
 .dynamodb/
 scraping-and-sending-a8b65707392e.json
 auth-credentials.json
+client_secret.json
