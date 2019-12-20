@@ -13,6 +13,7 @@ require('dotenv').config()
 // async to open spreadsheet
 async function accessSpreadsheet() {
     const doc = new GoogleSpreadsheet('1DjsN1HiiS7Iv7lKNucjeoQ6aS0_291JAovZ0LfgOItM')
+    // don't know how to store client secrets in Azure functions
     await promisify(doc.useServiceAccountAuth)(creds);
     const info = await promisify(doc.getInfo)();
     const sheet = info.worksheets[0];
@@ -26,7 +27,7 @@ async function accessSpreadsheet() {
     // iterate through every row
     rows.forEach(row => {
         // if email sent, do nothing
-        if(row.initialemail != "Confirmation Sent") {\
+        if(row.initialemail != "Confirmation Sent") {
 
             // begin working with nodemailer
             let transporter = nodemailer.createTransport({
