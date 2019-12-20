@@ -1,22 +1,14 @@
 // npm install googleapis@39 --save nodemailer dotenv
 
-
-// require dependencies
+// google sheets
 const GoogleSpreadsheet = require('google-spreadsheet');
 const { promisify } = require('util');
+const creds = require('./client_secret.json')
+// emailing
 const nodemailer = require('nodemailer');
+// environment variables
 require('dotenv').config()
 
-// call credentials
-const creds = require('./client_secret.json')
-
-// why doesn't this seem to receive the first parameter
-// function checkForConfirmation(confirmationStatus, row) {
-//     // console.log( confirmationStatus)
-//     if(confirmationStatus != "Confirmation Sent") {
-//         console.log("confirmation status:", confirmationStatus)
-//     }
-// }
 
 // async to open spreadsheet
 async function accessSpreadsheet() {
@@ -30,17 +22,11 @@ async function accessSpreadsheet() {
     const rows = await promisify(sheet.getRows)( {
     });
 
-    // declare cells
-    // const cells = await promisify(sheet.getCells)({  
-    // })
-
-
 
     // iterate through every row
     rows.forEach(row => {
         // if email sent, do nothing
-        if(row.initialemail != "Confirmation Sent") {
-            // TODO: integrate with nodemailer for confirmation emails
+        if(row.initialemail != "Confirmation Sent") {\
 
             // begin working with nodemailer
             let transporter = nodemailer.createTransport({
@@ -68,13 +54,11 @@ async function accessSpreadsheet() {
                 }
             });
 
-
             // after sent, write confirmation to spreadsheet
             row.initialemail = "Confirmation Sent"
             row.save()
             console.log("Sending now --> ", row.email)
         } 
-        // else, email user to confirm their registration
         else {
             console.log("Already sent")
         }
