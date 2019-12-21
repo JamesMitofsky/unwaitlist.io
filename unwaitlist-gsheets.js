@@ -3,7 +3,7 @@
 // google sheets
 const GoogleSpreadsheet = require('google-spreadsheet');
 const { promisify } = require('util');
-const creds = require('./client_secret.json')
+const creds = require('./client_secret.json');
 // emailing
 const nodemailer = require('nodemailer');
 // environment variables
@@ -12,21 +12,23 @@ require('dotenv').config()
 
 // async to open spreadsheet
 async function accessSpreadsheet() {
-    const doc = new GoogleSpreadsheet('1DjsN1HiiS7Iv7lKNucjeoQ6aS0_291JAovZ0LfgOItM')
+    const doc = new GoogleSpreadsheet('1DjsN1HiiS7Iv7lKNucjeoQ6aS0_291JAovZ0LfgOItM');
     // don't know how to store client secrets in Azure functions
     await promisify(doc.useServiceAccountAuth)(creds);
     const info = await promisify(doc.getInfo)();
+    // load spreadsheets
     const requestSheet = info.worksheets[0];
-    const cancelationSheet = info.worksheets[1]
-    console.log(`\nLoaded Spreadsheets: "${requestSheet.title}" and "${cancelationSheet.title}"`)
+    const cancelationSheet = info.worksheets[1];
+    // console.log() show which sheets are loaded
+    console.log(`\nLoaded Spreadsheets: "${requestSheet.title}" and "${cancelationSheet.title}"`);
 
-    // declare rows object
+    // declare rows objects
     const rowsOfRequestSheet = await promisify(requestSheet.getRows)({
     });
     const rowsOfCancelationSheet = await promisify(cancelationSheet.getRows)({
     })
 
-    // create empty arrays for console indexing
+    // console.log() create arrays for indexing students
     const canceledList = []
     const watchingList = []
 
@@ -37,7 +39,8 @@ async function accessSpreadsheet() {
             if (canceledRow.email == row.email && canceledRow.courseregistrationnumber == row.courseregistrationnumber && row.currentstatus != "Canceled") {
                 row.currentstatus = "Canceled"
                 row.save()
-                // use the console as a safety check for successful change
+
+                // console.log() whether a cancelation error occurred
                 if (row.currentstatus != "Canceled") {
                     console.log("Error: cancelation not logged", row.email)
                 } else {
@@ -45,14 +48,16 @@ async function accessSpreadsheet() {
                 }
             }
         })
-
-        // now in main request sheet again, if status is marked as canceled (regardless of how recent the change), push to array
+        // add to canceled indexing
         if (row.currentstatus == "Canceled") {
             canceledList.push(row.email)
         }
+        
 
-        // if not marked as canceled or yet confirmed, send confirmation email
+        // if neither marked canceled nor confirmed, send confirmation email
         if (row.initialemail != "Confirmation Sent" && row.currentstatus != "Canceled") {
+            // console.log() which student is currently being reviewed
+            console.log(row.courseregistrationnumber, row.email)
 
             // begin working with nodemailer
             let transporter = nodemailer.createTransport({
@@ -62,8 +67,7 @@ async function accessSpreadsheet() {
                     pass: process.env.EMAIL_PASS
                 }
             });
-
-            // set email content
+            // declare email content
             let mailOptions = {
                 from: 'unwaitlist.io@gmail.com',
                 // set useremail
@@ -71,7 +75,7 @@ async function accessSpreadsheet() {
                 subject: 'Unwaitlist Confirmation',
                 text: `Unwaitlist is now checking your course: https://www.uvm.edu/academics/courses/?term=202001&crn=${row.courseregistrationnumber}`
             };
-
+            // send email
             transporter.sendMail(mailOptions, function (error, info) {
                 if (error) {
                     console.log(error);
@@ -80,44 +84,28 @@ async function accessSpreadsheet() {
                 }
             });
 
-            // begin working with twilio
-            const accountSid = process.env.TWILIO_SID;
-            const authToken = process.env.TWILIO_TOKEN;
-            const client = require('twilio')(accountSid, authToken);
-
-            // transcript from twilio call: "<Response><Say voice="Polly.Joanna">Time to sign up for class!</Say></Response>"
-            // client.calls
-                // .create({
-                //     url: 'https://twimlets.com/echo?Twiml=%3CResponse%3E%0A%3CSay%20voice%3D%22Polly.Joanna%22%3ETime%20to%20sign%20up%20for%20class!%3C%2FSay%3E%0A%3C%2FResponse%3E&',
-                //     to: '+18027774849',
-                //     from: '+19374216969'
-                // })
-                // .then(call => console.log(call.sid));
-
-
             // after sent, write confirmation to spreadsheet
             row.initialemail = "Confirmation Sent"
-            row.save()
-        }
-        // count all confirmations, regardless of whether they were sent just now or earlier
-        if (row.initialemail == "Confirmation Sent" && row.currentstatus != "Canceled") {
             row.currentstatus = "Watching"
             row.save()
+        }
+
+        // add to confirmations indexing
+        if (row.currentstatus == "Watching") {
             watchingList.push(row.email)
         }
     })
 
     // console log which students have recieved a confirmation or have canceled
-    console.log(`\nWatching: ${watchingList.length}`)
-    for (i = 0; i < watchingList.length; i++) {
-        console.log(`\t${watchingList[i]}`)
-    }
-    console.log(`\nCanceled: ${canceledList.length}`)
-    for (i = 0; i < canceledList.length; i++) {
-        console.log(`\t${canceledList[i]}`)
-    }
-    console.log("\n")
-
+    // console.log(`\nWatching: ${watchingList.length}`)
+    // for (i = 0; i < watchingList.length; i++) {
+    //     console.log(`\t${watchingList[i]}`)
+    // }
+    // console.log(`\nCanceled: ${canceledList.length}`)
+    // for (i = 0; i < canceledList.length; i++) {
+    //     console.log(`\t${canceledList[i]}`)
+    // }
+    // console.log("\n")
 
 }
 
