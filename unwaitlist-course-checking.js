@@ -159,7 +159,6 @@ async function accessSpreadsheet(openCourses) {
                         to: `+1${row.phonenumber}`,
                         from: '+19088384751'
                     })
-                //     .then(call => console.log(call.sid));
 
                 row.currentstatus = "Open: notification sent"
                 row.save()
@@ -184,12 +183,6 @@ async function main() {
     const [openCourses, closedCourses] = await getProcessedCourseInfo(allCourseData)
 
     accessSpreadsheet(openCourses)
-
-    // these formats work
-    // console.log(closedCourses[0].link)
-    // console.log(openCourses[0].link)
-
-    // console.log(allCourseData.allCourses[0].link)
 }
 
 main()
