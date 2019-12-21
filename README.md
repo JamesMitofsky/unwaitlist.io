@@ -52,3 +52,7 @@ Gotta scrape 'n send that waitlist info: __unwaitlist.io__
 ## Considerations beyond the code
 - Setup email filter to move 'online status confirmed' emails from inbox to folder without notification
 - Set Twilio number as emergency contact which can override Do Not Disturb and Silent
+
+# TODO
+- Figure out accessing a client secrets json file in Azure functions
+- Make checking spreadsheet seperate from request spreadsheet. This will help with multiple class check requests.
