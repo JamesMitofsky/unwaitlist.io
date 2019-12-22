@@ -54,5 +54,6 @@ Gotta scrape 'n send that waitlist info: __unwaitlist.io__
 - Set Twilio number as emergency contact which can override Do Not Disturb and Silent
 
 # TODO
-- Figure out accessing a client secrets json file in Azure functions
+- Figure out accessing a client secrets json file in Azure functions.
 - Make checking spreadsheet seperate from request spreadsheet. This will help with multiple class check requests.
+- Have the program check if a CRN exists before registering it on the request sheet and sending a confirmation.

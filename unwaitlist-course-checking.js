@@ -1,3 +1,7 @@
+// description: this program takes the list of currently pending classes from the google sheet and checks against the 
+//              CSV file from UVM's database to see if their is course availability. If there is, it emails and calls
+//              the respective student.
+
 // dependencies: npm install require axios nodemailer twilio dotenv googleapis@39 --save
 
 // Google Sheets

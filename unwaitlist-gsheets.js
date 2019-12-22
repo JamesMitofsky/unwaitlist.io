@@ -1,3 +1,7 @@
+// description: this program checks google sheets to see if a new course request has been
+//              made. If one has, then email the user with an email confirming their registration
+//              or acknowledging that their CRN does not exist.
+
 // npm install googleapis@39 --save nodemailer dotenv
 
 // google sheets
