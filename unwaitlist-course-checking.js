@@ -125,7 +125,7 @@ async function accessSpreadsheet(openCourses) {
 
             // same CRNs and current status is marked as watching
             // if not marked as canceled, open prior to now, and the CRNs from open courses and requested match
-            if (row.courseregistrationnumber == course.crn && row.currentstatus == "Watching") {
+            if (row.courseregistrationnumber == course.crn && row.requeststatus == "Watching") {
 
                 // begin using nodemailer -- declare email credentials
                 let transporter = nodemailer.createTransport({
@@ -167,7 +167,7 @@ async function accessSpreadsheet(openCourses) {
                         from: '+19088384751'
                     })
 
-                row.currentstatus = "Available: notification sent"
+                row.requeststatus = "Available: notification sent"
                 row.save()
                 console.log("Email and call sent")
             }
