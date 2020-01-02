@@ -59,7 +59,36 @@ function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsOfStati
 
 }
 
-// this function is in a loop checking all combinations of requests and cancelations
+
+// trying to return value from inside loop
+function checkIfDuplicate(currentRequestRow, rowsOfRequestSheet) {
+    proof = false
+    // check every row to see if there is already a matching CRN request
+    rowsOfRequestSheet.forEach(row => {
+        if (currentRequestRow == row) {
+            // send duplicate email
+            console.log("Duplicate")
+            proof = true
+        }
+    })
+    return proof
+}
+
+
+function checkCRNValidity(requestRow, rowsOfStaticCourseInfo) {
+    // check to see if the CRN doesn't exist
+    rowsOfStaticCourseInfo.forEach(infoRow => {
+        if (infoRow.compnumb != requestRow.courseregistrationnumber) {
+            requestRow.currentstatus = "Unfound CRN"
+            requestRow.save()
+            // send unfound email
+            console.log("Unfound CRN")
+            return false
+        }
+    })
+}
+
+// check all combinations of requests and cancelations
 function checkIfCanceled(row, rowsOfCancelationSheet) {
     rowsOfCancelationSheet.forEach(canceledRow => {
         // helps make if statement criteria human readable
@@ -81,29 +110,6 @@ function checkIfCanceled(row, rowsOfCancelationSheet) {
             } else {
                 console.log("Error: cancelation not logged", row.email)
             }
-        }
-    })
-}
-
-function checkIfDuplicate(currentRequestRow, rowsOfRequestSheet) {
-    rowsOfRequestSheet.forEach(row => {
-        if (currentRequestRow == row) {
-            // send duplicate email
-            console.log("Duplicate")
-            let confirmedDuplicate = true
-            return confirmedDuplicate
-        }
-    })
-}
-
-function checkCRNValidity(requestRow, rowsOfStaticCourseInfo) {
-    rowsOfStaticCourseInfo.forEach(infoRow => {
-        if (infoRow.compnumb != requestRow.courseregistrationnumber) {
-            requestRow.currentstatus = "Unfound CRN"
-            requestRow.save()
-            // send unfound email
-            console.log("Unfound CRN")
-            return false
         }
     })
 }
