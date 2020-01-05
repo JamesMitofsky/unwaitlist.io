@@ -7,8 +7,9 @@
 // require google sheets
 const GoogleSpreadsheet = require('google-spreadsheet');
 const { promisify } = require('util');
-// require emailing
-const nodemailer = require('nodemailer');
+const sendEmail = require("./send-email")
+
+
 // require environment variables
 require('dotenv').config()
 
@@ -228,39 +229,4 @@ async function confirmedRequest(row) {
         row.currentstatus = "Watching"
         await promisify(row.save)()
     }
-}
-
-
-async function sendEmail(emailSubject, emailBody, emailRecipient, row) {
-
-    // begin working with nodemailer
-    let transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-        }
-    });
-
-    // declare email content
-    let mailOptions = {
-        from: 'unwaitlist.io@gmail.com',
-        // set user email
-        to: emailRecipient,
-        subject: emailSubject,
-        html: emailBody
-    };
-
-    // send email - fire & forget
-    transporter.sendMail(mailOptions, function(error, info) {
-        if (error) {
-            console.log(error);
-        } else {
-            console.log(`Email sent to ${emailRecipient} --> ` + info.response);
-        }
-    });
-
-    row.initialemail = "Contacted"
-
-    await promisify(row.save)()
 }
