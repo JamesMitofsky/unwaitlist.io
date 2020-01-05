@@ -85,6 +85,7 @@ Sheets will update [this google sheet](https://docs.google.com/spreadsheets/d/1D
 - Declare sensative values as, "NAME=VALUE" (without quotes & each assignment receiving its own line)
 - Access these values like, "process.env.NAME"
 - https://www.npmjs.com/package/dotenv
+- [bug in newline support](https://github.com/motdotla/dotenv/issues/218#issuecomment-325044380)
 
 ## Google Sheets API: user management
 

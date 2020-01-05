@@ -13,11 +13,11 @@ const nodemailer = require('nodemailer');
 require('dotenv').config()
 
 // build credential object
-const creds = {
+let creds = {
     type: process.env.type,
     project_id: process.env.project_id,
     private_key_id: process.env.private_key_id,
-    private_key: process.env.private_key,
+    private_key: JSON.parse(`"${process.env.private_key}"`), // escape newlines in string
     client_email: process.env.client_email,
     client_id: process.env.client_id,
     auth_uri: process.env.auth_uri,
@@ -26,33 +26,35 @@ const creds = {
     client_x509_cert_url: process.env.client_x509_cert_url,
 }
 
+
 // call main function
 accessSpreadsheet()
 
 
 // async to open spreadsheet
 async function accessSpreadsheet() {
-    const doc = new GoogleSpreadsheet('1DjsN1HiiS7Iv7lKNucjeoQ6aS0_291JAovZ0LfgOItM');
-    // don't know how to store client secrets in Azure functions
+    let sheetId = '1DjsN1HiiS7Iv7lKNucjeoQ6aS0_291JAovZ0LfgOItM'
+    const doc = new GoogleSpreadsheet(sheetId);
+
+    // pass credentials to doc
     await promisify(doc.useServiceAccountAuth)(creds);
     const info = await promisify(doc.getInfo)();
+
     // load spreadsheets
     const requestSheet = info.worksheets[0];
     const cancelationSheet = info.worksheets[1];
+    const staticCourseInfoSheet = info.worksheets[2] // TODO replace with local storage
 
-    // replace with local storage
-    const staticCourseInfoSheet = info.worksheets[2]
-        // console.log which sheets are loaded
+    // log which sheets are loaded
     console.log(`\nLoaded Spreadsheets: "${requestSheet.title}" and "${cancelationSheet.title}" and "${staticCourseInfoSheet.title}" `);
 
     // declare rows objects
     const rowsOfRequestSheet = await promisify(requestSheet.getRows)({});
     const rowsOfCancelationSheet = await promisify(cancelationSheet.getRows)({})
-
-    // replace this with locally stored data
-    const rowsOfStaticCourseInfo = await promisify(staticCourseInfoSheet.getRows)({})
+    const rowsOfStaticCourseInfo = await promisify(staticCourseInfoSheet.getRows)({}) // todo: replace this with locally stored data
 
     console.log("Connected...")
+
     evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsOfStaticCourseInfo)
 
 }
