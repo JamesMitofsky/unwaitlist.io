@@ -1,29 +1,30 @@
 {
-  "name": "unwaitlist-v1",
-  "version": "1.0.0",
-  "description": "Gotta scrape 'n send that waitlist info: __unwaitlist.io__",
-  "main": "unwaitlist-course-checking.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/JamesTedesco/unwaitlist-v1.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/JamesTedesco/unwaitlist-v1/issues"
-  },
-  "homepage": "https://github.com/JamesTedesco/unwaitlist-v1#readme",
-  "dependencies": {
-    "cheerio": "^1.0.0-rc.3",
-    "dotenv": "^8.2.0",
-    "google-spreadsheet": "^2.0.8",
-    "googleapis": "^39.2.0",
-    "nodemailer": "^6.4.2",
-    "require": "^2.4.20",
-    "twilio": "^3.39.1"
-  }
+    "name": "unwaitlist-v1",
+    "version": "1.0.0",
+    "description": "Gotta scrape 'n send that waitlist info: __unwaitlist.io__",
+    "main": "unwaitlist-course-checking.js",
+    "scripts": {
+        "course": "node unwaitlist-course-checking.js",
+        "sheets": "node unwaitlist-gsheets.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/JamesTedesco/unwaitlist-v1.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/JamesTedesco/unwaitlist-v1/issues"
+    },
+    "homepage": "https://github.com/JamesTedesco/unwaitlist-v1#readme",
+    "dependencies": {
+        "cheerio": "^1.0.0-rc.3",
+        "dotenv": "^8.2.0",
+        "google-spreadsheet": "^2.0.8",
+        "googleapis": "^39.2.0",
+        "nodemailer": "^6.4.2",
+        "require": "^2.4.20",
+        "twilio": "^3.39.1"
+    }
 }

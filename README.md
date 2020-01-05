@@ -28,6 +28,14 @@ With your credentials from google which should look like this:
   }
 ```
 
+## Run
+
+You can run the following two commands
+
+```bash
+npm run sheets
+npm run course
+```
 
 ## Project Resource Catalog
 
