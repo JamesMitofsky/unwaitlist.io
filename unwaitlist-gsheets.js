@@ -14,6 +14,40 @@ const nodemailer = require('nodemailer');
 require('dotenv').config()
 
 
+
+// call main function
+accessSpreadsheet()
+
+
+// async to open spreadsheet
+async function accessSpreadsheet() {
+    const doc = new GoogleSpreadsheet('1DjsN1HiiS7Iv7lKNucjeoQ6aS0_291JAovZ0LfgOItM');
+    // don't know how to store client secrets in Azure functions
+    await promisify(doc.useServiceAccountAuth)(creds);
+    const info = await promisify(doc.getInfo)();
+    // load spreadsheets
+    const requestSheet = info.worksheets[0];
+    const cancelationSheet = info.worksheets[1];
+
+    // replace with local storage
+    const staticCourseInfoSheet = info.worksheets[2]
+        // console.log which sheets are loaded
+    console.log(`\nLoaded Spreadsheets: "${requestSheet.title}" and "${cancelationSheet.title}" and "${staticCourseInfoSheet.title}" `);
+
+    // declare rows objects
+    const rowsOfRequestSheet = await promisify(requestSheet.getRows)({});
+    const rowsOfCancelationSheet = await promisify(cancelationSheet.getRows)({})
+
+    // replace this with locally stored data
+    const rowsOfStaticCourseInfo = await promisify(staticCourseInfoSheet.getRows)({})
+
+    console.log("Connected...")
+    evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsOfStaticCourseInfo)
+
+}
+
+
+
 // send confirmation info
 function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsOfStaticCourseInfo) {
 
@@ -36,12 +70,12 @@ function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsOfStati
             // if course num is valid, check if duplicate
             if (isRegNumInvalid == false) {
                 isRegNumDuplicate = checkIfDuplicate(row, rowsOfRequestSheet)
-                
+
                 // if class is not duplicate, check if canceled
                 if (isRegNumDuplicate == false) {
                     isRegNumCanceled = checkIfCanceled(row, rowsOfCancelationSheet)
 
-                    if(isRegNumCanceled == false) {
+                    if (isRegNumCanceled == false) {
                         confirmedRequest(row)
                     }
 
@@ -59,7 +93,7 @@ function checkCRNValidity(requestRow, rowsOfStaticCourseInfo) {
 
     // declare boolean
     let status = true
-    
+
     // check to see if the CRN doesn't exist
     rowsOfStaticCourseInfo.forEach(infoRow => {
 
@@ -83,7 +117,7 @@ function checkCRNValidity(requestRow, rowsOfStaticCourseInfo) {
         
         Here's the CRN the system was testing for: ${row.courseregistrationnumber}`
         let emailRecipient = row.email
-        // call email function
+            // call email function
         sendEmail(emailSubject, emailBody, emailRecipient, row)
 
     }
@@ -102,7 +136,7 @@ function checkIfDuplicate(currentRequestRow, rowsOfRequestSheet) {
 
         //if CRN is already requested & there's no live request pending, deny service
         if (currentRequestRow.courseregistrationnumber == checkingRow.courseregistrationnumber && checkingRow.currentstatus == "Watching") {
-            
+
             console.log("Duplicate:", currentRequestRow.courseregistrationnumber, currentRequestRow.currentstatus)
 
             // log it on spreadsheet
@@ -111,10 +145,10 @@ function checkIfDuplicate(currentRequestRow, rowsOfRequestSheet) {
 
             // declare email contents
             let emailSubject = "Duplicate Request"
-            // TODO: give user the date of when we started checking
+                // TODO: give user the date of when we started checking
             let emailBody = `It looks like we're already checking this class for you, but if this is a mistake, definitely bop me on Twitter @JamesTedesco802.\n\nHere's a link to the class your were looking at: https://www.uvm.edu/academics/courses/?term=202001&crn=${currentRequestRow.courseregistrationnumber}`
             let emailRecipient = currentRequestRow.email
-            // call email function
+                // call email function
             sendEmail(emailSubject, emailBody, emailRecipient, currentRequestRow)
 
 
@@ -162,13 +196,13 @@ function checkIfCanceled(row, rowsOfCancelationSheet) {
             
             Here's a link to the class your were looking at: https://www.uvm.edu/academics/courses/?term=202001&crn=${row.courseregistrationnumber}`
             let emailRecipient = row.email
-            // call email function
+                // call email function
             sendEmail(emailSubject, emailBody, emailRecipient, row)
 
             return status = false
         }
     })
-    
+
     // return to main func that the class is not canceled
     return status
 }
@@ -185,11 +219,11 @@ function confirmedRequest(row) {
         let emailSubject = "Unwaitlist Confirmation"
         let emailBody = `Unwaitlist is now checking your course: https://www.uvm.edu/academics/courses/?term=202001&crn=${row.courseregistrationnumber}`
         let emailRecipient = row.email
-        // call email function
+            // call email function
         sendEmail(emailSubject, emailBody, emailRecipient, row)
 
         // after sent, write confirmation to spreadsheet
-        row.initialemail = "Confirmation Sent"
+        // row.initialemail = "Confirmation Sent"
         row.currentstatus = "Watching"
         row.save()
     }
@@ -214,7 +248,7 @@ function sendEmail(emailSubject, emailBody, emailRecipient, row) {
         text: emailBody
     };
     // send email
-    transporter.sendMail(mailOptions, function (error, info) {
+    transporter.sendMail(mailOptions, function(error, info) {
         if (error) {
             console.log(error);
         } else {
@@ -225,38 +259,3 @@ function sendEmail(emailSubject, emailBody, emailRecipient, row) {
     row.initialemail = "Confirmation Sent"
     row.save()
 }
-
-
-// async to open spreadsheet
-async function accessSpreadsheet() {
-    const doc = new GoogleSpreadsheet('1DjsN1HiiS7Iv7lKNucjeoQ6aS0_291JAovZ0LfgOItM');
-    // don't know how to store client secrets in Azure functions
-    await promisify(doc.useServiceAccountAuth)(creds);
-    const info = await promisify(doc.getInfo)();
-    // load spreadsheets
-    const requestSheet = info.worksheets[0];
-    const cancelationSheet = info.worksheets[1];
-
-    // replace with local storage
-    const staticCourseInfoSheet = info.worksheets[2]
-    // console.log which sheets are loaded
-    console.log(`\nLoaded Spreadsheets: "${requestSheet.title}" and "${cancelationSheet.title}" and "${staticCourseInfoSheet.title}" `);
-
-    // declare rows objects
-    const rowsOfRequestSheet = await promisify(requestSheet.getRows)({
-    });
-    const rowsOfCancelationSheet = await promisify(cancelationSheet.getRows)({
-    })
-
-    // replace this with locally stored data
-    const rowsOfStaticCourseInfo = await promisify(staticCourseInfoSheet.getRows)({
-    })
-
-    console.log("Connected...")
-    evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsOfStaticCourseInfo)
-
-}
-
-
-// call main function
-accessSpreadsheet()
