@@ -37,6 +37,8 @@ npm run sheets
 npm run course
 ```
 
+Sheets will update [this google sheet](https://docs.google.com/spreadsheets/d/1DjsN1HiiS7Iv7lKNucjeoQ6aS0_291JAovZ0LfgOItM/edit?ts=5e121e54)
+
 ## Project Resource Catalog
 
 ## Azure Functions: free, cloud-based execution
@@ -77,7 +79,7 @@ npm run course
 
 ## Google Sheets API: user management
 
-### Setup
+### Sheets Setup
 
 - Online, visit the [Google Dev Console](https://console.developers.google.com/apis/dashboard) and create a service worker
 - Share your spreadsheet with the service worker's email
