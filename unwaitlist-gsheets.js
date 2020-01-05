@@ -68,74 +68,58 @@ function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsOfStati
     // iterate through every row of main request sheet
     rowsOfRequestSheet.forEach(row => {
 
-        // first, make sure this is a new user by checking they haven't been confirmed with but the line isn't blank
-        if (row.courseregistrationnumber != "" && row.initialemail != "Confirmation Sent") {
-            console.log("\nEntered new section: missing confirmation\n")
+        // check if we need to process, otherwise leave immediately
+        let rowHasData = row.courseregistrationnumber != ""
+        let confirmationNotSent = row.initialemail != "Confirmation Sent"
+        let needToProcess = rowHasData && confirmationNotSent
+        if (!needToProcess) { return }
 
-            // declare boolean checkers
-            let isRegNumInvalid = true
-            let isRegNumDuplicate = true
-            let isRegNumCanceled = true
+        console.log("\nEntered new section: missing confirmation\n")
 
-            // check if CRN exists this semester and email user if unfound
-            isRegNumInvalid = checkCRNValidity(row, rowsOfStaticCourseInfo)
+        // check if CRN exists this semester - otherwise leave immediately
+        if (!checkCRNIsValid(row, rowsOfStaticCourseInfo)) { return }
 
-            // if course num is valid, check if duplicate
-            if (isRegNumInvalid == false) {
-                isRegNumDuplicate = checkIfDuplicate(row, rowsOfRequestSheet)
+        // check if class is duplicate, otherwise leave immediately
+        if (checkIfDuplicate(row, rowsOfRequestSheet)) { return }
 
-                // if class is not duplicate, check if canceled
-                if (isRegNumDuplicate == false) {
-                    isRegNumCanceled = checkIfCanceled(row, rowsOfCancelationSheet)
+        // check if class i canclled, otherwise leave immediately
+        if (checkIfCanceled(row, rowsOfCancelationSheet)) { return }
 
-                    if (isRegNumCanceled == false) {
-                        confirmedRequest(row)
-                    }
+        // if we've passed all the checks, process the row
+        confirmedRequest(row)
 
-                }
-            }
-
-        }
     })
-
 }
 
 
 
-function checkCRNValidity(requestRow, rowsOfStaticCourseInfo) {
-
-    // declare boolean
-    let status = true
+function checkCRNIsValid(row, rowsOfStaticCourseInfo) {
 
     // check to see if the CRN doesn't exist
-    rowsOfStaticCourseInfo.forEach(infoRow => {
+    let crnExists = rowsOfStaticCourseInfo.some(row => row.compnumb == row.courseregistrationnumber)
+    if (crnExists) return true; // isValid
 
-        // if CRN exists, return false
-        if (infoRow.compnumb == requestRow.courseregistrationnumber) {
-            // valid CRN - matches crn from database
-            console.log("Valid CRN")
-            return status = false
-        }
-    })
+    // if we're not valid, update to reflect that
 
-    if (status == true) {
-        // invalid CRN
-        requestRow.currentstatus = "Unfound CRN"
-        requestRow.save()
+    // invalid CRN
+    row.currentstatus = "Unfound CRN"
+    row.save()
 
-        // send failure email
-        // declare email contents
-        let emailSubject = "Unfound CRN"
-        let emailBody = `The system couldn't find the CRN you gave it - make sure you're in the right semester. If you think something went wrong here, bop me on Twitter @JamesTedesco802.
-        
-        Here's the CRN the system was testing for: ${row.courseregistrationnumber}`
-        let emailRecipient = row.email
-            // call email function
-        sendEmail(emailSubject, emailBody, emailRecipient, row)
+    // send failure email
+    // declare email contents
+    let emailRecipient = row.email
+    let emailSubject = "Unfound CRN"
+    let emailBody = `The system couldn't find the CRN provided. 
+                     Please make sure you're in the right semester. 
+                     If you think something went wrong here, bop me on Twitter <a href="https://twitter.com/JamesTedesco802">@JamesTedesco802</a>.
+ 
+                     Here's the CRN the system was testing for: ${row.courseregistrationnumber}`
 
-    }
+    // call email function
+    sendEmail(emailSubject, emailBody, emailRecipient, row)
 
-    return status
+
+    return false // invalid
 }
 
 

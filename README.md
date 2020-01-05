@@ -110,3 +110,50 @@ Sheets will update [this google sheet](https://docs.google.com/spreadsheets/d/1D
 - Figure out accessing a client secrets json file in Azure functions.
 - Make checking spreadsheet separate from request spreadsheet. This will help with multiple class check requests.
 - Have the program check if a CRN exists before registering it on the request sheet and sending a confirmation.
+
+## Resources
+
+### Code Styles / Conventions
+
+* Boolean Values should always be verb questions that have yes/no answer (ex. `isRegNumInvalid`)
+  * Preference for intereprention should be default is false
+  * State things in the affirmative ex. prefer `IsTrue` to `IsUntrue`
+
+**Cyclomatic Complecity** - number of different possible paths, level of nesting, indentation
+
+**Example Bad**: Cyclomatic Complexity = 3
+
+```js
+if (someCondition) {
+    if (newCondition) {
+        if (nextCondition) {
+            // do something
+        }
+    }
+}
+```
+
+**Example Good**: Cyclomatic Complexity = 1 (with _Early Termination_ (ET))
+
+```js
+if (!someCondition) return
+if (!newCondition) return
+if (!nextCondition) return
+
+// do something
+```
+
+### JavaScript Array Examples
+
+```js
+var array = [{compnum: "13113"}, {compnum: "45345"}, {compnum: "34534"}]
+
+// map values in array to return processed value for each item
+array.map(i => i.compnum)
+
+// filter list of values to matching criteria
+array.filter(i => i.compnum === "45345")
+
+// see if any values in array meet criteria
+array.some(i => i.compnum === "45345")
+```
