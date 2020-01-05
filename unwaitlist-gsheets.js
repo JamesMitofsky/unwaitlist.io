@@ -62,7 +62,7 @@ async function accessSpreadsheet() {
 
 
 // send confirmation info
-function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsOfStaticCourseInfo) {
+async function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsOfStaticCourseInfo) {
 
 
     // iterate through every row of main request sheet
@@ -70,19 +70,19 @@ function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsOfStati
 
         // check if we need to process, otherwise leave immediately
         let rowHasData = row.courseregistrationnumber != ""
-        let confirmationNotSent = row.initialemail != "Confirmation Sent"
+        let confirmationNotSent = row.initialemail != "Contacted"
         let needToProcess = rowHasData && confirmationNotSent
         if (!needToProcess) { return }
 
         console.log("\nEntered new section: missing confirmation\n")
 
-        // check if CRN exists this semester - otherwise leave immediately
+        //  if CRN does not exist, then exit immediately
         if (!checkCRNIsValid(row, rowsOfStaticCourseInfo)) { return }
 
-        // check if class is duplicate, otherwise leave immediately
-        if (checkIfDuplicate(row, rowsOfRequestSheet)) { return }
+        // if crn is non unique (duplicate), then exit immediately
+        if (!checkIfIsUnique(row, rowsOfRequestSheet)) { return }
 
-        // check if class i canclled, otherwise leave immediately
+        // check if class is canceled, otherwise leave immediately
         if (checkIfCanceled(row, rowsOfCancelationSheet)) { return }
 
         // if we've passed all the checks, process the row
@@ -93,17 +93,15 @@ function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsOfStati
 
 
 
-function checkCRNIsValid(row, rowsOfStaticCourseInfo) {
+async function checkCRNIsValid(row, rowsOfStaticCourseInfo) {
 
     // check to see if the CRN doesn't exist
-    let crnExists = rowsOfStaticCourseInfo.some(row => row.compnumb == row.courseregistrationnumber)
+    let crnExists = rowsOfStaticCourseInfo.some(r => r.compnumb == row.courseregistrationnumber)
     if (crnExists) return true; // isValid
 
     // if we're not valid, update to reflect that
-
-    // invalid CRN
     row.currentstatus = "Unfound CRN"
-    row.save()
+    await promisify(row.save)()
 
     // send failure email
     // declare email contents
@@ -111,7 +109,8 @@ function checkCRNIsValid(row, rowsOfStaticCourseInfo) {
     let emailSubject = "Unfound CRN"
     let emailBody = `The system couldn't find the CRN provided. 
                      Please make sure you're in the right semester. 
-                     If you think something went wrong here, bop me on Twitter <a href="https://twitter.com/JamesTedesco802">@JamesTedesco802</a>.
+                     If you think something went wrong here, bop me on Twitter 
+                     <a href="https://twitter.com/JamesTedesco802">@JamesTedesco802</a>.
  
                      Here's the CRN the system was testing for: ${row.courseregistrationnumber}`
 
@@ -124,44 +123,49 @@ function checkCRNIsValid(row, rowsOfStaticCourseInfo) {
 
 
 // trying to return value from inside loop
-function checkIfDuplicate(currentRequestRow, rowsOfRequestSheet) {
+async function checkIfIsUnique(currentRequestRow, rowsOfRequestSheet) {
 
-    // declare conditional
-    let status = true
-
-    rowsOfRequestSheet.forEach(checkingRow => {
-
-        //if CRN is already requested & there's no live request pending, deny service
-        if (currentRequestRow.courseregistrationnumber == checkingRow.courseregistrationnumber && checkingRow.currentstatus == "Watching") {
-
-            console.log("Duplicate:", currentRequestRow.courseregistrationnumber, currentRequestRow.currentstatus)
-
-            // log it on spreadsheet
-            currentRequestRow.currentstatus = "Duplicate"
-            currentRequestRow.save()
-
-            // declare email contents
-            let emailSubject = "Duplicate Request"
-                // TODO: give user the date of when we started checking
-            let emailBody = `It looks like we're already checking this class for you, but if this is a mistake, definitely bop me on Twitter @JamesTedesco802.\n\nHere's a link to the class your were looking at: https://www.uvm.edu/academics/courses/?term=202001&crn=${currentRequestRow.courseregistrationnumber}`
-            let emailRecipient = currentRequestRow.email
-                // call email function
-            sendEmail(emailSubject, emailBody, emailRecipient, currentRequestRow)
-
-
-        } else {
-            // otherwise, allow the program to continue running
-            status = false
-
-        }
+    let foundDuplicate = rowsOfRequestSheet.some(row => {
+        return row.courseregistrationnumber === currentRequestRow.courseregistrationnumber && // same course request
+            row.email === currentRequestRow.email && // same user
+            row.currentstatus === "Watching" // previous row is already been processed
     })
-    return status
+
+    // if not found duplicate, we are unique - return valid
+    if (!foundDuplicate) { return true }
+
+
+    // if we're a duplicate, update to reflect that
+
+    // log it on spreadsheet
+    currentRequestRow.currentstatus = "Duplicate" // ENUM
+
+    await promisify(currentRequestRow.save)()
+
+    // declare email contents
+    let emailRecipient = currentRequestRow.email
+    let emailSubject = "Duplicate Request"
+        // TODO: give user the date of when we started checking
+    let emailBody = `It looks like we're already checking this class for you, but if this is a mistake, 
+    definitely bop me on Twitter <a href="https://twitter.com/JamesTedesco802">@JamesTedesco802</a>.
+    <br/><br/>
+    
+    Here's a link to the class your were looking at: 
+    
+    <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${currentRequestRow.courseregistrationnumber}">
+        CRN #${currentRequestRow.courseregistrationnumber}
+    </a>`
+
+    // call email function
+    sendEmail(emailSubject, emailBody, emailRecipient, currentRequestRow)
+
+    return false; //invalid
 }
 
 
 
 // check all combinations of requests and cancelations
-function checkIfCanceled(row, rowsOfCancelationSheet) {
+async function checkIfCanceled(row, rowsOfCancelationSheet) {
 
     let status = true
 
@@ -180,18 +184,18 @@ function checkIfCanceled(row, rowsOfCancelationSheet) {
 
             // mark canceled on the cancelationSheet
             canceledRow.cancelationstatus = "Handled"
-            canceledRow.save()
+            await promisify(canceledRow.save)()
 
             // mark canceled on the requestSheet
             row.currentstatus = "Canceled"
-            row.save()
+            await promisify(row.save)()
 
             // declare email contents
             let emailSubject = "Already Canceled Request"
             let emailBody = `I don't know how you managed it so quickly, but somehow your request already looks to be canceled.
-            If this is a mistake, definitely bop me on Twitter @JamesTedesco802.
-            
-            Here's a link to the class your were looking at: https://www.uvm.edu/academics/courses/?term=202001&crn=${row.courseregistrationnumber}`
+        If this is a mistake, definitely bop me on Twitter @JamesTedesco802.
+        
+        Here's a link to the class your were looking at: https://www.uvm.edu/academics/courses/?term=202001&crn=${row.courseregistrationnumber}`
             let emailRecipient = row.email
                 // call email function
             sendEmail(emailSubject, emailBody, emailRecipient, row)
@@ -205,7 +209,7 @@ function checkIfCanceled(row, rowsOfCancelationSheet) {
 }
 
 
-function confirmedRequest(row) {
+async function confirmedRequest(row) {
 
     // if current status is still default (left blank), begin checking
     if (row.currentstatus == "") {
@@ -220,14 +224,15 @@ function confirmedRequest(row) {
         sendEmail(emailSubject, emailBody, emailRecipient, row)
 
         // after sent, write confirmation to spreadsheet
-        // row.initialemail = "Confirmation Sent"
+        // row.initialemail = "Contacted"
         row.currentstatus = "Watching"
-        row.save()
+        await promisify(row.save)()
     }
 }
 
 
-function sendEmail(emailSubject, emailBody, emailRecipient, row) {
+async function sendEmail(emailSubject, emailBody, emailRecipient, row) {
+
     // begin working with nodemailer
     let transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -236,15 +241,17 @@ function sendEmail(emailSubject, emailBody, emailRecipient, row) {
             pass: process.env.EMAIL_PASS
         }
     });
+
     // declare email content
     let mailOptions = {
         from: 'unwaitlist.io@gmail.com',
         // set user email
         to: emailRecipient,
         subject: emailSubject,
-        text: emailBody
+        html: emailBody
     };
-    // send email
+
+    // send email - fire & forget
     transporter.sendMail(mailOptions, function(error, info) {
         if (error) {
             console.log(error);
@@ -253,6 +260,7 @@ function sendEmail(emailSubject, emailBody, emailRecipient, row) {
         }
     });
 
-    row.initialemail = "Confirmation Sent"
-    row.save()
+    row.initialemail = "Contacted"
+
+    await promisify(row.save)()
 }

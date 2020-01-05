@@ -32,11 +32,11 @@ async function getCourseInfo(csvLink) {
 
     // set url parameters
     const baseURL = "https://www.uvm.edu/academics/courses/?term=202001&crn="
-    // will contain cell information from upcoming loop
+        // will contain cell information from upcoming loop
     let csvRowCells = []
-    // stores all class info
+        // stores all class info
     let allCourses = []
-    // indexer
+        // indexer
     let courseListPosition = 0
 
     // split rows into cells
@@ -107,7 +107,7 @@ function getProcessedCourseInfo(unprocessedData) {
 // open spreadsheet
 async function accessSpreadsheet(openCourses) {
     const doc = new GoogleSpreadsheet('1DjsN1HiiS7Iv7lKNucjeoQ6aS0_291JAovZ0LfgOItM')
-    // don't know how to store client secrets in Azure functions
+        // don't know how to store client secrets in Azure functions
     await promisify(doc.useServiceAccountAuth)(creds);
     const info = await promisify(doc.getInfo)();
     // load request spreadsheet
@@ -115,8 +115,7 @@ async function accessSpreadsheet(openCourses) {
     console.log(`\nLoaded Spreadsheet "${requestSheet.title}"`)
 
     // parse request spreadsheet by rows
-    const rowsOfRequestSheet = await promisify(requestSheet.getRows)({
-    });
+    const rowsOfRequestSheet = await promisify(requestSheet.getRows)({});
 
     // loop through request sheet rows
     rowsOfRequestSheet.forEach(row => {
@@ -145,7 +144,7 @@ async function accessSpreadsheet(openCourses) {
                     text: `Use this CRN to sign up: ${row.courseregistrationnumber}\n\n https://www.uvm.edu/academics/courses/?term=202001&crn=${row.courseregistrationnumber}`
                 };
                 // send email
-                transporter.sendMail(mailOptions, function (error, info) {
+                transporter.sendMail(mailOptions, function(error, info) {
                     if (error) {
                         console.log(error);
                     } else {
@@ -168,7 +167,7 @@ async function accessSpreadsheet(openCourses) {
                     })
 
                 row.requeststatus = "Available: notification sent"
-                row.save()
+                await promisify(row.save)()
                 console.log("Email and call sent")
             }
         })
@@ -181,7 +180,7 @@ async function main() {
 
     // declare enrollment csv location
     const csvFile = "https://giraffe.uvm.edu/~rgweb/batch/curr_enroll_spring.txt"
-    // fall enrollment: https://giraffe.uvm.edu/~rgweb/batch/curr_enroll_fall.txt
+        // fall enrollment: https://giraffe.uvm.edu/~rgweb/batch/curr_enroll_fall.txt
 
     // open and parse csvFile into object
     const allCourseData = await getCourseInfo(csvFile)

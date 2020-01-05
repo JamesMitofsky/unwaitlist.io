@@ -70,6 +70,7 @@ Sheets will update [this google sheet](https://docs.google.com/spreadsheets/d/1D
 
 - [Quick start](https://www.w3schools.com/nodejs/nodejs_email.asp)
 - In Google Settings, make account available to "Less Secure" apps
+- [Nodemailer message configuration](https://nodemailer.com/message/)
 
 
 ## Twilio: web-based phone calls
@@ -97,7 +98,8 @@ Sheets will update [this google sheet](https://docs.google.com/spreadsheets/d/1D
 ### Usage
 
 - Reading can be done by cells or rows, but rows seems to make the context more easily understood
-- Writing is done simply with the assignment operator to a given cell, but this must be followed by "row.save()"
+- Writing is done simply with the assignment operator to a given cell, but this must be followed by `row.save()`
+- force save to happen immediately with `await promisify(row.save)()` instead of `row.save()`
 
 
 ## Considerations beyond the code
@@ -116,10 +118,10 @@ Sheets will update [this google sheet](https://docs.google.com/spreadsheets/d/1D
 ### Code Styles / Conventions
 
 * Boolean Values should always be verb questions that have yes/no answer (ex. `isRegNumInvalid`)
-  * Preference for intereprention should be default is false
+  * Preference for interpretation should be default is false
   * State things in the affirmative ex. prefer `IsTrue` to `IsUntrue`
 
-**Cyclomatic Complecity** - number of different possible paths, level of nesting, indentation
+**Cyclomatic Complexity** - number of different possible paths, level of nesting, indentation
 
 **Example Bad**: Cyclomatic Complexity = 3
 
@@ -133,6 +135,15 @@ if (someCondition) {
 }
 ```
 
+* Variable name length can get smaller as you limit the scope of that variable
+
+**Example**:
+
+```js
+cosnt USER_ROW_INFO = ""
+let row = allRows.find(r => r.id === ID)
+```
+
 **Example Good**: Cyclomatic Complexity = 1 (with _Early Termination_ (ET))
 
 ```js
@@ -142,6 +153,23 @@ if (!nextCondition) return
 
 // do something
 ```
+
+### JavaScript Brackets
+
+For guarded if statements, use brackets (just as style convention)
+
+```js
+if (!duplicateRow) return true      // bad
+if (!duplicateRow) { return true }  // good
+```
+
+### Avoid Yoda Conditions
+
+Try to place the target of the investigation as the first term/expersion in an comparison operator
+
+**Bad**:  `7 === x` - reads as "Does 7 equal x?"
+**Good**: `x === 7` - reads as "Does 'x' equal 7?"
+
 
 ### JavaScript Array Examples
 
@@ -153,6 +181,9 @@ array.map(i => i.compnum)
 
 // filter list of values to matching criteria
 array.filter(i => i.compnum === "45345")
+
+// filter list of values to matching criteria - but just find the first record - return record
+array.find(i => i.compnum === "45345")
 
 // see if any values in array meet criteria
 array.some(i => i.compnum === "45345")
