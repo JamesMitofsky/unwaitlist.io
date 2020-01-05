@@ -23,95 +23,127 @@ function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsOfStati
 
         // first, make sure this is a new user by checking they haven't been confirmed with but the line isn't blank
         if (row.courseregistrationnumber != "" && row.initialemail != "Confirmation Sent") {
+            console.log("\nEntered new section: missing confirmation\n")
 
-            console.log("\nEntered new section: missing confirmation")
+            // declare boolean checkers
+            let isRegNumInvalid = true
+            let isRegNumDuplicate = true
+            let isRegNumCanceled = true
 
-            // indicate if duplicate
-            console.log("Testing for duplicate")
-            let duplicateStatus = checkIfDuplicate(row, rowsOfRequestSheet)
-            // trying to extract true/false value from called function
-            console.log(duplicateStatus)
+            // check if CRN exists this semester and email user if unfound
+            isRegNumInvalid = checkCRNValidity(row, rowsOfStaticCourseInfo)
 
-            // create variable outside of if-statement
-            let validityOfCRN = true
+            // if course num is valid, check if duplicate
+            if (isRegNumInvalid == false) {
+                isRegNumDuplicate = checkIfDuplicate(row, rowsOfRequestSheet)
+                
+                // if class is not duplicate, check if canceled
+                if (isRegNumDuplicate == false) {
+                    isRegNumCanceled = checkIfCanceled(row, rowsOfCancelationSheet)
 
-            if (duplicateStatus === false) {
-                console.log("failed duplicate test")
-                // ensure CRN exists for current semester, and email user if unfound
-                validityOfCRN = checkCRNValidity(row, rowsOfStaticCourseInfo)
+                    if(isRegNumCanceled == false) {
+                        confirmedRequest(row)
+                    }
 
-                //trying to evaluate validity as false here and pass that out of this if-statement
-                console.log("validity logged as false", validityOfCRN)
-
-            } else if (validityOfCRN === false) {
-                // this seems like it should be part of the main program
-                // if email and crn from cancelation sheet match (and not already handled), mark cancelation on request sheet
-                checkIfCanceled(row, rowsOfCancelationSheet)
-
-            } else {
-                // if valid request, send confirmation to student
-                confirmedRequest(row)
-
+                }
             }
 
         }
     })
 
+}
+
+
+
+function checkCRNValidity(requestRow, rowsOfStaticCourseInfo) {
+
+    // declare boolean
+    let status = true
+    
+    // check to see if the CRN doesn't exist
+    rowsOfStaticCourseInfo.forEach(infoRow => {
+
+        // if CRN exists, return false
+        if (infoRow.compnumb == requestRow.courseregistrationnumber) {
+            // valid CRN - matches crn from database
+            console.log("Valid CRN")
+            return status = false
+        }
+    })
+
+    if (status == true) {
+        // invalid CRN
+        requestRow.currentstatus = "Unfound CRN"
+        requestRow.save()
+    }
+
+    return status
 }
 
 
 // trying to return value from inside loop
 function checkIfDuplicate(currentRequestRow, rowsOfRequestSheet) {
-    proof = false
-    // check every row to see if there is already a matching CRN request
+
+    // declare conditional
+    let status = true
+
     rowsOfRequestSheet.forEach(row => {
-        if (currentRequestRow == row) {
-            // send duplicate email
+
+        //if CRN is already requested & there's no live request pending, deny service
+        if (currentRequestRow == row && currentRequestRow.currentstatus == "Watching" || currentRequestRow.currentstatus == "Canceled") {
+            // send failure email
             console.log("Duplicate")
-            proof = true
+
+            // log it on spreadsheet
+            row.currentstatus = "Duplicate"
+            row.save()
+
+        } else {
+            // otherwise, allow the program to continue running
+            status = false
+
         }
     })
-    return proof
+    return status
 }
 
 
-function checkCRNValidity(requestRow, rowsOfStaticCourseInfo) {
-    // check to see if the CRN doesn't exist
-    rowsOfStaticCourseInfo.forEach(infoRow => {
-        if (infoRow.compnumb != requestRow.courseregistrationnumber) {
-            requestRow.currentstatus = "Unfound CRN"
-            requestRow.save()
-            // send unfound email
-            console.log("Unfound CRN")
-            return false
-        }
-    })
-}
 
 // check all combinations of requests and cancelations
 function checkIfCanceled(row, rowsOfCancelationSheet) {
+
+    let status = true
+
     rowsOfCancelationSheet.forEach(canceledRow => {
+
         // helps make if statement criteria human readable
         let sameEmail = canceledRow.email == row.email
         let sameCRN = canceledRow.courseregistrationnumber == row.courseregistrationnumber
         let notCanceled = row.currentstatus != "Canceled"
-        // this is important to make sure a user isn't forever prevented from reactivating that CRN
+
+        // marks cancel request as dealt with
         let notHandled = canceledRow.cancelationstatus != "Handled"
 
+        // if user email and class match, as well as they haven't yet canceled this class, handle the request
         if (sameEmail && sameCRN && notCanceled && notHandled) {
+            // mark canceled on the requestSheet
             row.currentstatus = "Canceled"
             row.save()
+            // mark canceled on the cancelationSheet
             canceledRow.cancelationstatus = "Handled"
             canceledRow.save()
 
             // console.log() whether a cancelation error occurred
-            if (row.currentstatus == "Canceled") {
-                console.log("Successfully canceled for", row.email, row.courseregistrationnumber)
-            } else {
-                console.log("Error: cancelation not logged", row.email)
-            }
+            // if (row.currentstatus == "Canceled") {
+            //     console.log("Successfully canceled for", row.email, row.courseregistrationnumber)
+            // }
+
+            return status = false
         }
     })
+    
+    // return to main func that the class is not canceled
+    return status
 }
 
 function confirmedRequest(row) {
@@ -165,7 +197,7 @@ async function accessSpreadsheet() {
 
     // replace with local storage
     const staticCourseInfoSheet = info.worksheets[2]
-    // console.log() show which sheets are loaded
+    // console.log which sheets are loaded
     console.log(`\nLoaded Spreadsheets: "${requestSheet.title}" and "${cancelationSheet.title}" and "${staticCourseInfoSheet.title}" `);
 
     // declare rows objects
@@ -200,4 +232,3 @@ async function accessSpreadsheet() {
 
 // call main function
 accessSpreadsheet()
-
