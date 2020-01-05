@@ -6,7 +6,7 @@ Gotta scrape 'n send that waitlist info: __unwaitlist.io__
 ## Quickstart: install dependencies
 
 ```bash
-npm install require cheerio nodemailer twilio dotenv googleapis@39
+npm install require cheerio nodemailer twilio dotenv googleapis@39 google-spreadsheet
 ```
 
 
