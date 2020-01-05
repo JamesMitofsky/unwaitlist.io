@@ -10,33 +10,29 @@ Gotta scrape 'n send that waitlist info: __unwaitlist.io__
 npm install require cheerio nodemailer twilio dotenv googleapis@39 google-spreadsheet
 ```
 
-### Add `client_secret.json` file
-
-With your credentials from google which should look like this:
-
-```json
-{
-    "type": "service_account",
-    "project_id": "***",
-    "private_key_id": "***",
-    "private_key": "-----BEGIN PRIVATE KEY-----\n***",
-    "client_id": "***",
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "***"
-  }
-```
 
 ### Add `.env` file
 
 With config info for twilio
 
 ```ini
+# twilio
 EMAIL_USER=youemail@domain.com
 EMAIL_PASS=***
 TWILIO_SID=***
 TWILIO_TOKEN=***
+
+# g-sheets auth
+type=***
+project_id=***
+private_key_id=***
+private_key=-----BEGIN PRIVATE KEY-----\***
+client_email=***
+client_id=***
+auth_uri=https://accounts.google.com/o/oauth2/auth
+token_uri=https://oauth2.googleapis.com/token
+auth_provider_x509_cert_url=https://www.googleapis.com/oauth2/v1/certs
+client_x509_cert_url=***
 ```
 
 
