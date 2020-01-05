@@ -10,7 +10,7 @@ Gotta scrape 'n send that waitlist info: __unwaitlist.io__
 npm install require cheerio nodemailer twilio dotenv googleapis@39 google-spreadsheet
 ```
 
-### Add client_secret.json
+### Add `client_secret.json` file
 
 With your credentials from google which should look like this:
 
@@ -27,6 +27,19 @@ With your credentials from google which should look like this:
     "client_x509_cert_url": "***"
   }
 ```
+
+### Add `.env` file
+
+With config info for twilio
+
+```ini
+EMAIL_USER=youemail@domain.com
+EMAIL_PASS=***
+TWILIO_SID=***
+TWILIO_TOKEN=***
+```
+
+
 
 ## Run
 
