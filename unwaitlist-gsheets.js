@@ -175,13 +175,11 @@ async function checkIsCanceled(row, rowsOfCancelationSheet) {
     //     canceledRow.cancelationstatus != "Handled"
     // })
 
-
     // if (!cancelationRequested) { return false }
 
+    let isCanceled = false
 
-    let status = false
-
-    rowsOfCancelationSheet.forEach(async canceledRow => {
+    rowsOfCancelationSheet.forEach(canceledRow => {
 
         // helps make if statement criteria human readable
         let sameEmail = canceledRow.email == row.email
@@ -192,6 +190,8 @@ async function checkIsCanceled(row, rowsOfCancelationSheet) {
 
         // if user email and class match, as well as they haven't yet canceled this class, handle the request
         if (cancelationRequested) {
+
+            isCanceled = true
 
             // mark canceled on the cancelationSheet
             canceledRow.cancelationstatus = "Handled"
@@ -217,6 +217,7 @@ async function checkIsCanceled(row, rowsOfCancelationSheet) {
 
         }
     })
+    return isCanceled
 
 }
 
@@ -235,8 +236,6 @@ async function confirmedRequest(row) {
             // call email function
         sendEmail(emailSubject, emailBody, emailRecipient, row)
 
-        // after sent, write confirmation to spreadsheet
-        // row.initialemail = "Contacted"
         row.currentstatus = "Watching"
         await promisify(row.save)()
     }
