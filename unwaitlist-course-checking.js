@@ -4,17 +4,55 @@
 
 // dependencies: npm install require axios nodemailer twilio dotenv googleapis@39 --save
 
-// Google Sheets
+// gSheets
 const GoogleSpreadsheet = require('google-spreadsheet');
 const { promisify } = require('util');
-const creds = require('./client_secret.json');
-// page loading
+// website loading
 const axios = require("axios");
-// email
+// emailing
 const nodemailer = require('nodemailer');
-// environment variables
 require('dotenv').config()
+// calling
+const accountSid = process.env.TWILIO_SID;
+const authToken = process.env.TWILIO_TOKEN;
+const client = require('twilio')(accountSid, authToken);
 
+
+// build credential object
+let creds = {
+    type: process.env.type,
+    project_id: process.env.project_id,
+    private_key_id: process.env.private_key_id,
+    private_key: JSON.parse(`"${process.env.private_key}"`), // escape newlines in string
+    client_email: process.env.client_email,
+    client_id: process.env.client_id,
+    auth_uri: process.env.auth_uri,
+    token_uri: process.env.token_uri,
+    auth_provider_x509_cert_url: process.env.auth_provider_x509_cert_url,
+    client_x509_cert_url: process.env.client_x509_cert_url,
+}
+
+
+
+
+main()
+
+// async to respect child functions (at least, I think so)
+async function main() {
+
+    // declare enrollment csv location
+    const csvFile = "https://giraffe.uvm.edu/~rgweb/batch/curr_enroll_spring.txt"
+    // fall enrollment: https://giraffe.uvm.edu/~rgweb/batch/curr_enroll_fall.txt
+
+    // open and parse csvFile into object
+    const allCourseData = await getCourseInfo(csvFile)
+
+    // process allCourseData into open/closed catagorizations
+    const [openCourses, closedCourses] = await getProcessedCourseInfo(allCourseData)
+
+    // check gSheet for which students need to be contacted about open courses
+    accessSpreadsheet(openCourses)
+}
 
 
 // indexes UVM's CSV file
@@ -32,11 +70,11 @@ async function getCourseInfo(csvLink) {
 
     // set url parameters
     const baseURL = "https://www.uvm.edu/academics/courses/?term=202001&crn="
-        // will contain cell information from upcoming loop
+    // will contain cell information from upcoming loop
     let csvRowCells = []
-        // stores all class info
+    // stores all class info
     let allCourses = []
-        // indexer
+    // indexer
     let courseListPosition = 0
 
     // split rows into cells
@@ -107,89 +145,85 @@ function getProcessedCourseInfo(unprocessedData) {
 // open spreadsheet
 async function accessSpreadsheet(openCourses) {
     const doc = new GoogleSpreadsheet('1DjsN1HiiS7Iv7lKNucjeoQ6aS0_291JAovZ0LfgOItM')
-        // don't know how to store client secrets in Azure functions
     await promisify(doc.useServiceAccountAuth)(creds);
     const info = await promisify(doc.getInfo)();
-    // load request spreadsheet
     const requestSheet = info.worksheets[0];
-    console.log(`\nLoaded Spreadsheet "${requestSheet.title}"`)
+    const staticCourseInfoSheet = info.worksheets[2];
+    console.log(`\nLoaded Spreadsheet "${requestSheet.title}" and "${staticCourseInfoSheet.title}"`)
 
     // parse request spreadsheet by rows
     const rowsOfRequestSheet = await promisify(requestSheet.getRows)({});
+    const rowsOfStaticCourseInfo = await promisify(staticCourseInfoSheet.getRows)({}) // todo: replace this with locally stored data
 
     // loop through request sheet rows
     rowsOfRequestSheet.forEach(row => {
         // loop through rows of open sheet
-        openCourses.forEach(course => {
+        openCourses.forEach(openCourse => {
 
-            // same CRNs and current status is marked as watching
-            // if not marked as canceled, open prior to now, and the CRNs from open courses and requested match
-            if (row.courseregistrationnumber == course.crn && row.requeststatus == "Watching") {
+            // if course is open and status is marked as watching, email student
+            let courseIsOpen = row.courseregistrationnumber == openCourse.crn
+            if (courseIsOpen && row.currentstatus == "Watching") {
 
-                // begin using nodemailer -- declare email credentials
-                let transporter = nodemailer.createTransport({
-                    service: 'gmail',
-                    auth: {
-                        user: process.env.EMAIL_USER,
-                        pass: process.env.EMAIL_PASS
-                    }
-                });
+                // save to spreadsheet early to avoid double calls
+                row.currentstatus = "Available: notification sent"
+                row.save()
 
-                // declare email content
-                let mailOptions = {
-                    from: 'unwaitlist.io@gmail.com',
-                    // declare current student as email recipient
-                    to: row.email,
-                    subject: 'Your Course is Open!',
-                    text: `Use this CRN to sign up: ${row.courseregistrationnumber}\n\n https://www.uvm.edu/academics/courses/?term=202001&crn=${row.courseregistrationnumber}`
-                };
-                // send email
-                transporter.sendMail(mailOptions, function(error, info) {
-                    if (error) {
-                        console.log(error);
-                    } else {
-                        console.log(`Email sent to ${row.email} --> ` + info.response);
-                    }
-                });
+                let rowOfCourseName = rowsOfStaticCourseInfo.find(dataRow => {
+                    return dataRow.compnumb == row.courseregistrationnumber
+                })
 
 
-                // begin working with Twilio -- declare credentials
-                const accountSid = process.env.TWILIO_SID;
-                const authToken = process.env.TWILIO_TOKEN;
-                const client = require('twilio')(accountSid, authToken);
+                // declare email contents
+                let courseName = rowOfCourseName.title
+                let emailRecipient = row.email
+                let emailSubject = "Your Course is Open!"
+                let emailBody = `Your class, <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${row.courseregistrationnumber}">${courseName}</a>, now has availability.
+                <br/><br/>
+                Use this CRN to sign up: ${row.courseregistrationnumber}`
 
-                // initiate call to specific student
-                client.calls
-                    .create({
-                        url: 'http://twimlets.com/echo?Twiml=Your%20course%20is%20now%20open.%20Check%20your%20email%20for%20the%20Course%20Registration%20Number.&',
-                        to: `+1${row.phonenumber}`,
-                        from: '+19088384751'
-                    })
-
-                row.requeststatus = "Available: notification sent"
-                await promisify(row.save)()
-                console.log("Email and call sent")
+                // call email function
+                sendEmail(emailSubject, emailBody, emailRecipient, row)
             }
+
         })
     })
-    console.log("\nProgram end")
 }
 
-// async to respect child functions (at least, I think so)
-async function main() {
+async function sendEmail(emailSubject, emailBody, emailRecipient, row) {
 
-    // declare enrollment csv location
-    const csvFile = "https://giraffe.uvm.edu/~rgweb/batch/curr_enroll_spring.txt"
-        // fall enrollment: https://giraffe.uvm.edu/~rgweb/batch/curr_enroll_fall.txt
+    // begin using nodemailer -- declare email credentials
+    let transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
+        }
+    });
 
-    // open and parse csvFile into object
-    const allCourseData = await getCourseInfo(csvFile)
+    // declare email content
+    let mailOptions = {
+        from: 'unwaitlist.io@gmail.com',
+        to: emailRecipient,
+        subject: emailSubject,
+        html: emailBody
+    };
+    // send email
+    transporter.sendMail(mailOptions, function (error, info) {
+        if (error) {
+            console.log(error);
+        } else {
+            console.log(`Email sent to ${row.email} --> ` + info.response);
+        }
+    });
 
-    // process allCourseData into open/closed catagorizations
-    const [openCourses, closedCourses] = await getProcessedCourseInfo(allCourseData)
+    // initiate call to specific student
+    client.calls
+        .create({
+            url: 'http://twimlets.com/echo?Twiml=Your%20course%20is%20now%20open.%20Check%20your%20email%20for%20the%20Course%20Registration%20Number.&',
+            to: `+1${row.phonenumber}`,
+            from: '+19088384751'
+        })
 
-    // check gSheet for which students need to be contacted about open courses
-    accessSpreadsheet(openCourses)
+
+    console.log("Notified student")
 }
-
-main()
