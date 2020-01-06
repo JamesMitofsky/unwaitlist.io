@@ -76,11 +76,11 @@ async function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsO
 
         console.log("\nEntered new section: missing confirmation\n")
 
-        //  if CRN does not exist, then exit immediately
-        if (!checkCRNIsValid(row, rowsOfStaticCourseInfo)) { return }
-
         // check if class is canceled, otherwise leave immediately
         if (!checkIsCanceled(row, rowsOfCancelationSheet)) { return }
+
+        //  if CRN does not exist, then exit immediately
+        if (!checkCRNIsValid(row, rowsOfStaticCourseInfo)) { return }
 
         // if crn is non unique (duplicate), then exit immediately
         if (!checkIfIsUnique(row, rowsOfRequestSheet)) { return }
@@ -121,47 +121,6 @@ async function checkCRNIsValid(row, rowsOfStaticCourseInfo) {
     console.log("Invalid CRN")
 
     return false // invalid
-}
-
-
-// trying to return value from inside loop
-async function checkIfIsUnique(currentRequestRow, rowsOfRequestSheet) {
-
-    let foundDuplicate = rowsOfRequestSheet.some(row => {
-        return row.courseregistrationnumber === currentRequestRow.courseregistrationnumber && // same course request
-            row.email === currentRequestRow.email && // same user
-            row.currentstatus === "Watching" // previous row is already been processed
-    })
-
-    // if not found duplicate, we are unique - return valid
-    if (!foundDuplicate) { return true }
-
-
-    // if we're a duplicate, update to reflect that
-
-    // log it on spreadsheet
-    currentRequestRow.currentstatus = "Duplicate" // ENUM
-
-    currentRequestRow.save()
-
-    // declare email contents
-    let emailRecipient = currentRequestRow.email
-    let emailSubject = "Duplicate Request"
-        // TODO: give user the date of when we started checking
-    let emailBody = `It looks like we're already checking this class for you, but if this is a mistake, 
-    definitely bop me on Twitter <a href="https://twitter.com/JamesTedesco802">@JamesTedesco802</a>.
-    <br/><br/>
-    
-    Here's a link to the class your were looking at: 
-    
-    <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${currentRequestRow.courseregistrationnumber}">
-        CRN #${currentRequestRow.courseregistrationnumber}
-    </a>`
-
-    // call email function
-    sendEmail(emailSubject, emailBody, emailRecipient, currentRequestRow)
-
-    return false; //invalid
 }
 
 
@@ -219,6 +178,47 @@ async function checkIsCanceled(row, rowsOfCancelationSheet) {
     })
     return isCanceled
 
+}
+
+
+// trying to return value from inside loop
+async function checkIfIsUnique(currentRequestRow, rowsOfRequestSheet) {
+
+    let foundDuplicate = rowsOfRequestSheet.some(row => {
+        return row.courseregistrationnumber === currentRequestRow.courseregistrationnumber && // same course request
+            row.email === currentRequestRow.email && // same user
+            row.currentstatus === "Watching" // previous row is already been processed
+    })
+
+    // if not found duplicate, we are unique - return valid
+    if (!foundDuplicate) { return true }
+
+
+    // if we're a duplicate, update to reflect that
+
+    // log it on spreadsheet
+    currentRequestRow.currentstatus = "Duplicate" // ENUM
+
+    currentRequestRow.save()
+
+    // declare email contents
+    let emailRecipient = currentRequestRow.email
+    let emailSubject = "Duplicate Request"
+        // TODO: give user the date of when we started checking
+    let emailBody = `It looks like we're already checking this class for you, but if this is a mistake, 
+    definitely bop me on Twitter <a href="https://twitter.com/JamesTedesco802">@JamesTedesco802</a>.
+    <br/><br/>
+    
+    Here's a link to the class your were looking at: 
+    
+    <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${currentRequestRow.courseregistrationnumber}">
+        CRN #${currentRequestRow.courseregistrationnumber}
+    </a>`
+
+    // call email function
+    sendEmail(emailSubject, emailBody, emailRecipient, currentRequestRow)
+
+    return false; //invalid
 }
 
 
