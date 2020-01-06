@@ -99,17 +99,16 @@ Sheets will update [this google sheet](https://docs.google.com/spreadsheets/d/1D
 
 - Reading can be done by cells or rows, but rows seems to make the context more easily understood
 - Writing is done simply with the assignment operator to a given cell, but this must be followed by `row.save()`
-- force save to happen immediately with `await promisify(row.save)()` instead of `row.save()`
+- Caution: don't fully understand this, but it seems to ensure a save ONLY when it is the last statement to be evaluated in a function. You can force a save to happen immediately with `await promisify(row.save)()` instead of `row.save()`. My experience otherwise has been that it will end the function wherever you call promisify from.
 
 
 ## Considerations beyond the code
 
-- Setup email filter to move 'online status confirmed' emails from inbox to folder without notification
 - Set Twilio number as emergency contact which can override Do Not Disturb and Silent
 
 ## TODO
 
-- Figure out accessing a client secrets json file in Azure functions.
+- Add environment variable tracking in Azure functions.
 - Make checking spreadsheet separate from request spreadsheet. This will help with multiple class check requests.
 - Have the program check if a CRN exists before registering it on the request sheet and sending a confirmation.
 

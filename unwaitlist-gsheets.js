@@ -79,11 +79,11 @@ async function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsO
         //  if CRN does not exist, then exit immediately
         if (!checkCRNIsValid(row, rowsOfStaticCourseInfo)) { return }
 
+        // check if class is canceled, otherwise leave immediately
+        if (!checkIsCanceled(row, rowsOfCancelationSheet)) { return }
+
         // if crn is non unique (duplicate), then exit immediately
         if (!checkIfIsUnique(row, rowsOfRequestSheet)) { return }
-
-        // check if class is canceled, otherwise leave immediately
-        if (checkIfCanceled(row, rowsOfCancelationSheet)) { return }
 
         // if we've passed all the checks, process the row
         confirmedRequest(row)
@@ -101,7 +101,7 @@ async function checkCRNIsValid(row, rowsOfStaticCourseInfo) {
 
     // if we're not valid, update to reflect that
     row.currentstatus = "Unfound CRN"
-    await promisify(row.save)()
+    row.save()
 
     // send failure email
     // declare email contents
@@ -117,6 +117,8 @@ async function checkCRNIsValid(row, rowsOfStaticCourseInfo) {
     // call email function
     sendEmail(emailSubject, emailBody, emailRecipient, row)
 
+
+    console.log("Invalid CRN")
 
     return false // invalid
 }
@@ -140,7 +142,7 @@ async function checkIfIsUnique(currentRequestRow, rowsOfRequestSheet) {
     // log it on spreadsheet
     currentRequestRow.currentstatus = "Duplicate" // ENUM
 
-    await promisify(currentRequestRow.save)()
+    currentRequestRow.save()
 
     // declare email contents
     let emailRecipient = currentRequestRow.email
@@ -165,30 +167,39 @@ async function checkIfIsUnique(currentRequestRow, rowsOfRequestSheet) {
 
 
 // check all combinations of requests and cancelations
-async function checkIfCanceled(row, rowsOfCancelationSheet) {
+async function checkIsCanceled(row, rowsOfCancelationSheet) {
 
-    let status = true
+    // let cancelationRequested = rowsOfCancelationSheet.some(canceledRow => {
+    //     canceledRow.email == row.email &&
+    //     canceledRow.courseregistrationnumber == row.courseregistrationnumber &&
+    //     canceledRow.cancelationstatus != "Handled"
+    // })
 
-    rowsOfCancelationSheet.forEach(canceledRow => {
+
+    // if (!cancelationRequested) { return false }
+
+
+    let status = false
+
+    rowsOfCancelationSheet.forEach(async canceledRow => {
 
         // helps make if statement criteria human readable
         let sameEmail = canceledRow.email == row.email
         let sameCRN = canceledRow.courseregistrationnumber == row.courseregistrationnumber
-        let notCanceled = row.currentstatus != "Canceled"
-
-        // marks cancel request as dealt with
+        // let notCanceled = row.currentstatus != "Canceled"
         let notHandled = canceledRow.cancelationstatus != "Handled"
+        let cancelationRequested = sameEmail && sameCRN && notHandled
 
         // if user email and class match, as well as they haven't yet canceled this class, handle the request
-        if (sameEmail && sameCRN && notCanceled && notHandled) {
+        if (cancelationRequested) {
 
             // mark canceled on the cancelationSheet
             canceledRow.cancelationstatus = "Handled"
-            await promisify(canceledRow.save)()
+            canceledRow.save()
 
             // mark canceled on the requestSheet
             row.currentstatus = "Canceled"
-            await promisify(row.save)()
+            row.save()
 
             // declare email contents
             let emailSubject = "Already Canceled Request"
@@ -200,12 +211,13 @@ async function checkIfCanceled(row, rowsOfCancelationSheet) {
                 // call email function
             sendEmail(emailSubject, emailBody, emailRecipient, row)
 
-            return status = false
+
+            console.log("Canceled")
+
+
         }
     })
 
-    // return to main func that the class is not canceled
-    return status
 }
 
 
