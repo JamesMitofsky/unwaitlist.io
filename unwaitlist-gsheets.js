@@ -86,7 +86,7 @@ async function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsO
         if (!checkIfIsUnique(row, rowsOfRequestSheet)) { return }
 
         // if we've passed all the checks, process the row
-        confirmedRequest(row)
+        confirmedRequest(row, rowsOfStaticCourseInfo)
 
     })
 }
@@ -222,16 +222,23 @@ async function checkIfIsUnique(currentRequestRow, rowsOfRequestSheet) {
 }
 
 
-async function confirmedRequest(row) {
+async function confirmedRequest(row, rowsOfStaticCourseInfo) {
 
     // if current status is still default (left blank), begin checking
     if (row.currentstatus == "") {
         // console.log() which student is currently being reviewed
         console.log("Available Class:", row.courseregistrationnumber, row.email)
 
+        let rowOfCourseName = rowsOfStaticCourseInfo.find(dataRow => {
+            return dataRow.compnumb == row.courseregistrationnumber
+        })
+
+        let courseName = rowOfCourseName.title
+
+
         // declare email contents
         let emailSubject = "Unwaitlist Confirmation"
-        let emailBody = `Unwaitlist is now checking your course: https://www.uvm.edu/academics/courses/?term=202001&crn=${row.courseregistrationnumber}`
+        let emailBody = `Unwaitlist is now checking your course: <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${row.courseregistrationnumber}">${courseName}</a>`
         let emailRecipient = row.email
             // call email function
         sendEmail(emailSubject, emailBody, emailRecipient, row)
