@@ -161,8 +161,9 @@ async function accessSpreadsheet(openCourses) {
         openCourses.forEach(openCourse => {
 
             // if course is open and status is marked as watching, email student
-            let courseIsOpen = row.courseregistrationnumber == openCourse.crn
-            if (courseIsOpen && row.currentstatus == "Watching") {
+            let courseHasAvailability = row.courseregistrationnumber == openCourse.crn
+            let courseIsBeingWatched = row.currentstatus == "Watching"
+            if (courseHasAvailability && courseIsBeingWatched) {
 
                 // save to spreadsheet early to avoid double calls
                 row.currentstatus = "Available: notification sent"
