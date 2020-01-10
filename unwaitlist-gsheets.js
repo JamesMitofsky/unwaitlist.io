@@ -78,13 +78,13 @@ async function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsO
         console.log("\nEntered new section: missing confirmation\n")
 
         // check if class is canceled, otherwise leave immediately
-        if (!checkIsCanceled(row, rowsOfCancelationSheet)) { return }
+        if (!checkIsCanceled(row, rowsOfCancelationSheet, rowsOfStaticCourseInfo)) { return }
 
         //  if CRN does not exist, then exit immediately
         if (!checkCRNIsValid(row, rowsOfStaticCourseInfo)) { return }
 
         // if crn is non unique (duplicate), then exit immediately
-        if (!checkIfIsUnique(row, rowsOfRequestSheet)) { return }
+        if (!checkIfIsUnique(row, rowsOfRequestSheet, rowsOfStaticCourseInfo)) { return }
 
         // if we've passed all the checks, process the row
         confirmedRequest(row, rowsOfStaticCourseInfo)
@@ -94,25 +94,25 @@ async function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsO
 
 
 
-async function checkCRNIsValid(row, rowsOfStaticCourseInfo) {
+async function checkCRNIsValid(currentRow, rowsOfStaticCourseInfo) {
 
     // check to see if the CRN doesn't exist
-    let crnExists = rowsOfStaticCourseInfo.some(r => r.compnumb == row.courseregistrationnumber)
+    let crnExists = rowsOfStaticCourseInfo.some(r => r.compnumb == currentRow.courseregistrationnumber)
     if (crnExists) return true; // isValid
 
 
     // declare email contents
     let messageType = "Unfound CRN"
-    let emailRecipient = row.email
+    let emailRecipient = currentRow.email
     let emailSubject = "Unfound CRN"
     let emailBody = `The system couldn't find the CRN provided. 
                      Please make sure you're in the right semester. 
                      If you think something went wrong here, bop me on Twitter 
                      <a href="https://twitter.com/JamesTedesco802">@JamesTedesco802</a>.
  
-                     Here's the CRN the system was testing for: ${row.courseregistrationnumber}`
+                     Here's the CRN the system was testing for: ${currentRow.courseregistrationnumber}`
     // call email function
-    sendEmail(emailSubject, emailBody, emailRecipient, row, messageType)
+    sendEmail(emailSubject, emailBody, emailRecipient, currentRow, messageType)
 
 
     console.log("Invalid CRN")
@@ -123,7 +123,7 @@ async function checkCRNIsValid(row, rowsOfStaticCourseInfo) {
 
 
 // check all combinations of requests and cancelations
-async function checkIsCanceled(row, rowsOfCancelationSheet) {
+async function checkIsCanceled(currentRow, rowsOfCancelationSheet, rowsOfStaticCourseInfo) {
 
     // let cancelationRequested = rowsOfCancelationSheet.some(canceledRow => {
     //     canceledRow.email == row.email &&
@@ -138,9 +138,10 @@ async function checkIsCanceled(row, rowsOfCancelationSheet) {
     rowsOfCancelationSheet.forEach(canceledRow => {
 
         // helps make if statement criteria human readable
-        let sameEmail = canceledRow.email == row.email
-        let sameCRN = canceledRow.courseregistrationnumber == row.courseregistrationnumber
-        // let notCanceled = row.currentstatus != "Canceled"
+        let sameEmail = canceledRow.email == currentRow.email
+        let sameCRN = canceledRow.courseregistrationnumber == currentRow.courseregistrationnumber
+        // not needed because field will be blank since the request is new
+        // let stillActive = currentRow.currentstatus == "Watching"
         let notHandled = canceledRow.cancelationstatus != "Handled"
         let cancelationRequested = sameEmail && sameCRN && notHandled
 
@@ -149,16 +150,22 @@ async function checkIsCanceled(row, rowsOfCancelationSheet) {
 
             isCanceled = true
 
+            let rowOfCourseName = rowsOfStaticCourseInfo.find(dataRow => {
+                return dataRow.compnumb == canceledRow.courseregistrationnumber
+            })
+        
+            let courseName = rowOfCourseName.title
+
             // declare email contents
-            messageType = "Canceled"
-            let emailRecipient = row.email
+            let messageType = "Canceled"
+            let emailRecipient = currentRow.email
             let emailSubject = "Already Canceled Request"
             let emailBody = `I don't know how you managed it so quickly, but somehow your request already looks to be canceled.
             If this is a mistake, definitely bop me on Twitter @JamesTedesco802.
             <br/><br/>
-            Here's a link to the class your were looking at: https://www.uvm.edu/academics/courses/?term=202001&crn=${row.courseregistrationnumber}`
+            Here's the class your were looking at: <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${currentRow.courseregistrationnumber}">${courseName}</a>`
             // call email function
-            sendEmail(emailSubject, emailBody, emailRecipient, row, messageType, canceledRow)
+            sendEmail(emailSubject, emailBody, emailRecipient, currentRow, messageType, canceledRow)
             console.log("Canceled")
 
 
@@ -170,7 +177,7 @@ async function checkIsCanceled(row, rowsOfCancelationSheet) {
 
 
 // trying to return value from inside loop
-async function checkIfIsUnique(currentRequestRow, rowsOfRequestSheet) {
+async function checkIfIsUnique(currentRequestRow, rowsOfRequestSheet, rowsOfStaticCourseInfo) {
 
     let foundDuplicate = rowsOfRequestSheet.some(row => {
         return row.courseregistrationnumber === currentRequestRow.courseregistrationnumber && // same course request
@@ -181,6 +188,12 @@ async function checkIfIsUnique(currentRequestRow, rowsOfRequestSheet) {
     // if not found duplicate, we are unique - return valid
     if (!foundDuplicate) { return true }
 
+    let rowOfCourseName = rowsOfStaticCourseInfo.find(dataRow => {
+        return dataRow.compnumb == currentRequestRow.courseregistrationnumber
+    })
+
+    let courseName = rowOfCourseName.title
+
 
     // declare email contents
     let messageType = "Duplicate"
@@ -190,12 +203,8 @@ async function checkIfIsUnique(currentRequestRow, rowsOfRequestSheet) {
     let emailBody = `It looks like we're already checking this class for you, but if this is a mistake, 
     definitely bop me on Twitter <a href="https://twitter.com/JamesTedesco802">@JamesTedesco802</a>.
     <br/><br/>
-    
     Here's a link to the class your were looking at: 
-    
-    <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${currentRequestRow.courseregistrationnumber}">
-        CRN #${currentRequestRow.courseregistrationnumber}
-    </a>`
+    <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${currentRequestRow.courseregistrationnumber}">${courseName}</a>`
 
     // call email function
     sendEmail(emailSubject, emailBody, emailRecipient, currentRequestRow, messageType)
@@ -255,7 +264,7 @@ async function sendEmail(emailSubject, emailBody, emailRecipient, row, messageTy
         if (error) {
             console.log(error);
         } else {
-            console.log(`Email sent to ${emailRecipient} --> ` + info.response);
+            console.log(`${messageType} email sent to ${emailRecipient} --> ` + info.response);
         }
     });
 
