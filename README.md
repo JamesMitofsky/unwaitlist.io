@@ -77,7 +77,7 @@ Sheets will update [this google sheet](https://docs.google.com/spreadsheets/d/1D
 
 - [Outbound call quickstart](https://www.twilio.com/docs/voice/quickstart/node?code-sample=code-make-an-outbound-call&code-language=Node.js&code-sdk-version=3.x)
 - [Text to speech docs](https://www.twilio.com/docs/voice/twiml/say/text-speech)
-- [Twimlet Echo, URL builder](https://www.twilio.com/labs/twimlets/echo)
+- [Twimlet Echo, URL builder](https://www.twilio.com/labs/twimlets/echo) - be sure to use the <Response> and <Say> hierarchy
 
 
 ## dotenv: protecting sensitive variables

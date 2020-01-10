@@ -220,7 +220,8 @@ async function sendEmail(emailSubject, emailBody, emailRecipient, row) {
     // initiate call to specific student
     client.calls
         .create({
-            url: 'http://twimlets.com/echo?Twiml=Your%20course%20is%20now%20open.%20Check%20your%20email%20for%20the%20Course%20Registration%20Number.&',
+            // Message: "A class that Unwaitlist has been watching for you is now open. Check your email for the CRN."
+            url: 'http://twimlets.com/echo?Twiml=%3CResponse%3E%3CSay%3EA%20class%20that%20Unwaitlist%20has%20been%20watching%20for%20you%20is%20now%20open.%20Check%20your%20email%20for%20the%20CRN.%3C%2FSay%3E%3C%2FResponse%3E&',
             to: `+1${row.phonenumber}`,
             from: '+19088384751'
         })
