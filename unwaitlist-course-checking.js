@@ -183,14 +183,14 @@ async function accessSpreadsheet(openCourses) {
                 Use this CRN to sign up: ${row.courseregistrationnumber}`
 
                 // call email function
-                sendEmail(emailSubject, emailBody, emailRecipient, row)
+                sendEmail(emailSubject, emailBody, emailRecipient, row, rowsOfStaticCourseInfo)
             }
 
         })
     })
 }
 
-async function sendEmail(emailSubject, emailBody, emailRecipient, row) {
+async function sendEmail(emailSubject, emailBody, emailRecipient, row, rowsOfStaticCourseInfo) {
 
     // begin using nodemailer -- declare email credentials
     let transporter = nodemailer.createTransport({
@@ -217,11 +217,21 @@ async function sendEmail(emailSubject, emailBody, emailRecipient, row) {
         }
     });
 
+
+    // get course name
+    let rowOfCourseName = rowsOfStaticCourseInfo.find(dataRow => {
+        return dataRow.compnumb == row.courseregistrationnumber
+    })
+    let courseName = rowOfCourseName.title
+
+    // convert name to URL compatible format
+    let urlCourseName = courseName.replace(/ /g, "%20")
+
     // initiate call to specific student
     client.calls
         .create({
-            // Message: "A class that Unwaitlist has been watching for you is now open. Check your email for the CRN."
-            url: 'http://twimlets.com/echo?Twiml=%3CResponse%3E%3CSay%3EA%20class%20that%20Unwaitlist%20has%20been%20watching%20for%20you%20is%20now%20open.%20Check%20your%20email%20for%20the%20CRN.%3C%2FSay%3E%3C%2FResponse%3E&',
+            // Text content: "<Response><Say>Unwaitlist has detected an open spot in . Check your email for the course registration number.</Say></Response>"
+            url: `https://twimlets.com/echo?Twiml=%3CResponse%3E%3CSay%3E%0AUnwaitlist%20has%20detected%20an%20open%20spot%20in%20${urlCourseName}.%20Check%20your%20email%20for%20the%20course%20registration%20number.%0A%3C%2FSay%3E%3C%2FResponse%3E&`,
             to: `+1${row.phonenumber}`,
             from: '+19088384751'
         })
