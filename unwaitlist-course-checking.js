@@ -157,6 +157,8 @@ async function accessSpreadsheet(openCourses) {
 
     // loop through request sheet rows
     rowsOfRequestSheet.forEach(row => {
+
+        // apologyText(row, rowsOfStaticCourseInfo)
         // loop through rows of open sheet
         openCourses.forEach(openCourse => {
 
@@ -180,10 +182,16 @@ async function accessSpreadsheet(openCourses) {
                 let emailSubject = "Your Course is Open!"
                 let emailBody = `Your class, <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${row.courseregistrationnumber}">${courseName}</a>, now has availability.
                 <br/><br/>
-                Use this CRN to sign up: ${row.courseregistrationnumber}`
+                Use this CRN to sign up: ${row.courseregistrationnumber}
+                `
+                // <br/><br/>
+                // <img src="../Images/undraw_online_popularity_elhc.svg" alt="Confirmation Success Image"></img>
+
+
 
                 // call email function
                 sendEmail(emailSubject, emailBody, emailRecipient, row, rowsOfStaticCourseInfo)
+                
             }
 
         })
@@ -228,14 +236,48 @@ async function sendEmail(emailSubject, emailBody, emailRecipient, row, rowsOfSta
     let urlCourseName = courseName.replace(/ /g, "%20")
 
     // initiate call to specific student
-    client.calls
+    // client.calls
+    //     .create({
+    //         // Text content: "<Response><Say>Unwaitlist has detected an open spot in ${courseName}. Check your email for the course registration number.</Say></Response>"
+    //         url: `https://twimlets.com/echo?Twiml=%3CResponse%3E%3CSay%3E%0AUnwaitlist%20has%20detected%20an%20open%20spot%20in%20${urlCourseName}.%20Check%20your%20email%20for%20the%20course%20registration%20number.%0A%3C%2FSay%3E%3C%2FResponse%3E&`,
+    //         to: `+1${row.phonenumber}`,
+    //         from: '+18022103669'
+    //     })
+
+    // send text
+    client.messages
         .create({
-            // Text content: "<Response><Say>Unwaitlist has detected an open spot in . Check your email for the course registration number.</Say></Response>"
-            url: `https://twimlets.com/echo?Twiml=%3CResponse%3E%3CSay%3E%0AUnwaitlist%20has%20detected%20an%20open%20spot%20in%20${urlCourseName}.%20Check%20your%20email%20for%20the%20course%20registration%20number.%0A%3C%2FSay%3E%3C%2FResponse%3E&`,
-            to: `+1${row.phonenumber}`,
-            from: '+19088384751'
-        })
+            body: `Unwaitlist has detected an open spot in ${courseName}. Here's the CRN: ${row.courseregistrationnumber}.`,
+            from: '+18022103669',
+            to: `+1${row.phonenumber}`
+            })
 
 
     console.log("Notified student")
+}
+
+function apologyText(row, rowsOfStaticCourseInfo) {
+    if (row.currentstatus == "Testing") {
+
+        let rowOfCourseName = rowsOfStaticCourseInfo.find(dataRow => {
+            return dataRow.compnumb == row.courseregistrationnumber
+        })
+        let courseName = rowOfCourseName.title
+
+
+        client.messages
+            .create({
+                body: `Hey there, this is the Unwaitlist system. Within the last few days, your course, ${courseName}, became available. `,
+                from: '+18022103669',
+                to: `+1${row.phonenumber}`
+                })
+        client.messages
+            .create({
+                body: `Sorry for the late delivery, but now the phone service code looks prime. :)`,
+                from: '+18022103669',
+                to: `+1${row.phonenumber}`
+                })
+
+                
+    }
 }
