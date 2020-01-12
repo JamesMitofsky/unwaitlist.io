@@ -7,6 +7,15 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "Launch Cross-Listings",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}\\import-cross-listings.js"
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "Launch Course",
             "skipFiles": [
                 "<node_internals>/**"
