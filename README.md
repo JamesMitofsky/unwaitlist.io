@@ -80,8 +80,9 @@ Sheets will update [this google sheet](https://docs.google.com/spreadsheets/d/1D
 - [Twimlet Echo, URL builder](https://www.twilio.com/labs/twimlets/echo) - be sure to use the <Response> and <Say> hierarchy
 
 
-## Axios: promise based http requests
-- 
+## Axios: webpage loading
+- make promise based http requests
+- won't render any javascript based changes
 
 
 ## dotenv: protecting sensitive variables
