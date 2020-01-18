@@ -11,6 +11,8 @@ const { promisify } = require('util');
 const nodemailer = require('nodemailer');
 // require environment variables
 require('dotenv').config()
+// website loading
+const axios = require("axios");
 
 // build credential object
 let creds = {
@@ -65,6 +67,16 @@ async function accessSpreadsheet() {
 async function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsOfStaticCourseInfo) {
 
 
+    // declare enrollment csv location
+    const csvFile = "https://giraffe.uvm.edu/~rgweb/batch/curr_enroll_spring.txt"
+    // fall enrollment: https://giraffe.uvm.edu/~rgweb/batch/curr_enroll_fall.txt
+    
+    // open and parse csvFile into object
+    const allCourseData = await getCourseInfo(csvFile)
+    // process allCourseData into open/closed catagorizations
+    const [openCourses, closedCourses] = await getProcessedCourseInfo(allCourseData)
+
+
     // iterate through every row of main request sheet
     rowsOfRequestSheet.forEach(row => {
 
@@ -72,22 +84,30 @@ async function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsO
         let rowHasData = row.courseregistrationnumber != ""
         // if currentStatus is blank, user hasn't been processed - testing to phase out the confirmation sent column
         let confirmationNotSent = row.currentstatus == ""
-        let needToProcess = rowHasData && confirmationNotSent
-        if (!needToProcess) { return }
+        let unhandledRequest = rowHasData && confirmationNotSent
+        // if the request has already been handled, check if duplicate or unique
+        if (unhandledRequest) {
+            console.log("\nEntered new section: missing confirmation\n")
 
-        console.log("\nEntered new section: missing confirmation\n")
+            // check if class is canceled, otherwise leave immediately
+            if (!checkIsCanceled(row, rowsOfCancelationSheet, rowsOfStaticCourseInfo)) { return }
 
-        // check if class is canceled, otherwise leave immediately
-        if (!checkIsCanceled(row, rowsOfCancelationSheet, rowsOfStaticCourseInfo)) { return }
+            //  if CRN does not exist, then exit immediately
+            if (!checkCRNIsValid(row, rowsOfStaticCourseInfo)) { return }
 
-        //  if CRN does not exist, then exit immediately
-        if (!checkCRNIsValid(row, rowsOfStaticCourseInfo)) { return }
+            // if crn is non unique (duplicate), then exit immediately
+            if (!checkIfIsUnique(row, rowsOfRequestSheet, rowsOfStaticCourseInfo)) { return }
 
-        // if crn is non unique (duplicate), then exit immediately
-        if (!checkIfIsUnique(row, rowsOfRequestSheet, rowsOfStaticCourseInfo)) { return }
+            // if we've passed all the checks, process the row
+            confirmedRequest(row, rowsOfStaticCourseInfo)
+        } else { // this checks classes if the initial request has already been handled
+            // check if canceled
+            if (!checkIsCanceled(row, rowsOfCancelationSheet, rowsOfStaticCourseInfo)) { return }
+            // if not canceled, check availability
+            checkIfAvailable(row, rowsOfStaticCourseInfo, allCourseData, openCourses)
+        }
 
-        // if we've passed all the checks, process the row
-        confirmedRequest(row, rowsOfStaticCourseInfo)
+
 
     })
 }
@@ -153,7 +173,7 @@ async function checkIsCanceled(currentRow, rowsOfCancelationSheet, rowsOfStaticC
             let rowOfCourseName = rowsOfStaticCourseInfo.find(dataRow => {
                 return dataRow.compnumb == canceledRow.courseregistrationnumber
             })
-        
+
             let courseName = rowOfCourseName.title
 
             // declare email contents
@@ -199,7 +219,7 @@ async function checkIfIsUnique(currentRequestRow, rowsOfRequestSheet, rowsOfStat
     let messageType = "Duplicate"
     let emailRecipient = currentRequestRow.email
     let emailSubject = "Duplicate Request"
-        // TODO: give user the date of when we started checking
+    // TODO: give user the date of when we started checking
     let emailBody = `It looks like we're already checking this class for you, but if this is a mistake, 
     definitely bop me on Twitter <a href="https://twitter.com/JamesTedesco802">@JamesTedesco802</a>.
     <br/><br/>
@@ -238,7 +258,7 @@ async function confirmedRequest(row, rowsOfStaticCourseInfo) {
     }
 }
 
-
+// sends email with passed contents
 async function sendEmail(emailSubject, emailBody, emailRecipient, row, messageType, canceledRow) {
 
     // begin working with nodemailer
@@ -260,7 +280,7 @@ async function sendEmail(emailSubject, emailBody, emailRecipient, row, messageTy
     };
 
     // send email - fire & forget
-    transporter.sendMail(mailOptions, function(error, info) {
+    transporter.sendMail(mailOptions, function (error, info) {
         if (error) {
             console.log(error);
         } else {
@@ -285,6 +305,133 @@ async function sendEmail(emailSubject, emailBody, emailRecipient, row, messageTy
         // also mark cancelation sheet
         canceledRow.cancelationstatus = "Handled"
         canceledRow.save()
+    } else if (messageType == "Availablity notified") {
+        row.currentstatus = messageType
+        row.save()
     }
 
+}
+
+// checks to see if class has spot
+function checkIfAvailable(row, rowsOfStaticCourseInfo, allCourseData, openCourses) {
+
+
+    // loop through items of open courses object
+    openCourses.forEach(openCourse => {
+
+        // if course is open and status is marked as watching, email student
+        let courseHasAvailability = row.courseregistrationnumber == openCourse.crn
+        let courseIsBeingWatched = row.currentstatus == "Watching"
+        if (courseHasAvailability && courseIsBeingWatched) {
+
+
+            let rowOfCourseName = rowsOfStaticCourseInfo.find(dataRow => {
+                return dataRow.compnumb == row.courseregistrationnumber
+            })
+
+
+            // declare email contents
+            let messageType = "Availability notified"
+            let courseName = rowOfCourseName.title
+            let emailRecipient = row.email
+            let emailSubject = "Your Course is Open!"
+            let emailBody = `Your class, <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${row.courseregistrationnumber}">${courseName}</a>, now has availability.
+        <br/><br/>
+        Use this CRN to sign up: ${row.courseregistrationnumber}`
+            // <br/><br/>
+            // <img src="../Images/undraw_online_popularity_elhc.svg" alt="Confirmation Success Image"></img>
+            sendEmail(emailSubject, emailBody, emailRecipient, row, messageType)
+
+        }
+
+    })
+
+
+}
+
+// indexes UVM's CSV file
+async function getCourseInfo(csvLink) {
+    // use axios to load CSV file
+    try {
+        let response = await axios.get(csvLink);
+        csvDoc = response.data
+    } catch (error) {
+        console.error(error);
+    }
+
+    // removes quotations from all cells and adds each row to an array
+    csvRows = csvDoc.replace(/"/g, '').split('\n')
+
+    // set url parameters
+    const baseURL = "https://www.uvm.edu/academics/courses/?term=202001&crn="
+    // will contain cell information from upcoming loop
+    let csvRowCells = []
+    // stores all class info
+    let allCourses = []
+    // indexer
+    let courseListPosition = 0
+
+    // split rows into cells
+    for (i = 0; i < csvRows.length; i++) {
+        const row = csvRows[i]
+        csvRowCells.push(row.split(','))
+
+        // i must be > 0 to skip the headers and the row must have content to avoid an error
+        if (i > 0 && row != '') {
+
+            // give simple names for composed variables
+            let currentCRN = await csvRowCells[i][3].trim()
+            let currentLink = await baseURL + currentCRN
+            let maxClassSeats = await parseInt(csvRowCells[i][8].trim())
+            let numOfStudentsEnrolled = await parseInt(csvRowCells[i][9].trim())
+
+            // start working with object
+            allCourses[courseListPosition] = {
+                link: currentLink,
+                crn: currentCRN,
+                numOfStudentsEnrolled,
+                maxClassSeats,
+            }
+
+            // sorts classes based on whether there is space for at least one more student
+            if (numOfStudentsEnrolled < maxClassSeats) {
+                allCourses[courseListPosition].availabilityStatus = "Open"
+            } else {
+                allCourses[courseListPosition].availabilityStatus = "Closed"
+            }
+
+            // increment indexer
+            courseListPosition++
+
+        }
+    }
+
+    return {
+        allCourses
+    }
+}
+
+// evaluates data from UVM's CSV file
+function getProcessedCourseInfo(unprocessedData) {
+
+    // create arrays for differentiation of allCourses
+    let openCourses = []
+    let closedCourses = []
+
+    // differentiate between open and closed courses
+    for (course of unprocessedData.allCourses) {
+        if (course.availabilityStatus == "Open") {
+            openCourses.push(course)
+        } else {
+            closedCourses.push(course)
+        }
+    }
+
+    // report how many classes are open and full
+    console.log("Open:", openCourses.length, "\nClosed:", closedCourses.length)
+
+    return [
+        openCourses,
+        closedCourses
+    ]
 }

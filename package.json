@@ -19,6 +19,7 @@
     },
     "homepage": "https://github.com/JamesTedesco/unwaitlist-v1#readme",
     "dependencies": {
+        "axios": "^0.19.1",
         "cheerio": "^1.0.0-rc.3",
         "dotenv": "^8.2.0",
         "google-spreadsheet": "^2.0.8",

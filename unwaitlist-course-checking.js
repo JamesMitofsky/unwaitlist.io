@@ -159,7 +159,7 @@ async function accessSpreadsheet(openCourses) {
     rowsOfRequestSheet.forEach(row => {
 
         // apologyText(row, rowsOfStaticCourseInfo)
-        // loop through rows of open sheet
+        // loop through items of open courses object
         openCourses.forEach(openCourse => {
 
             // if course is open and status is marked as watching, email student
