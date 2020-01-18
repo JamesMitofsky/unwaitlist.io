@@ -16,20 +16,11 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Course",
+            "name": "Launch Unwaitlist",
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "${workspaceFolder}\\unwaitlist-course-checking.js"
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Launch Sheets",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "program": "${workspaceFolder}\\unwaitlist-gsheets.js"
+            "program": "${workspaceFolder}\\unwaitlist.js"
         },
     ]
 }
