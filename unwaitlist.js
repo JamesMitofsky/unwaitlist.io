@@ -187,11 +187,9 @@ async function checkIsCanceled(currentRow, rowsOfCancelationSheet, rowsOfStaticC
 
             // declare email contents
             let emailRecipient = currentRow.email
-            let emailSubject = "Already Canceled Request"
-            let emailBody = `I don't know how you managed it so quickly, but somehow your request already looks to be canceled.
-            If this is a mistake, definitely bop me on Twitter @JamesTedesco802.
-            <br/><br/>
-            Here's the class your were looking at: <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${currentRow.courseregistrationnumber}">${courseName}</a>`
+            let emailSubject = "Cancelation Processed"
+            let emailBody = `Your cancelation request has been successfully processed. Unwaitlist is no longer tracking <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${currentRow.courseregistrationnumber}">${courseName}</a>
+            If this is a mistake, definitely bop me on Twitter @JamesTedesco802.`
             // call email function
             sendEmail(emailSubject, emailBody, emailRecipient, currentRow, canceledRow)
             console.log("Canceled")
