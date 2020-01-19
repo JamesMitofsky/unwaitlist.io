@@ -99,7 +99,7 @@ async function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsO
             if (!checkIfIsUnique(row, rowsOfRequestSheet, rowsOfStaticCourseInfo)) { return }
 
             // if we've passed all the checks, process the row
-            confirmedRequest(row, rowsOfStaticCourseInfo)
+            confirmRequest(row, rowsOfStaticCourseInfo)
         } else { // this checks classes if the initial request has already been handled
             // check if canceled
             if (!checkIsCanceled(row, rowsOfCancelationSheet, rowsOfStaticCourseInfo)) { return }
@@ -118,11 +118,13 @@ async function checkCRNIsValid(currentRow, rowsOfStaticCourseInfo) {
 
     // check to see if the CRN doesn't exist
     let crnExists = rowsOfStaticCourseInfo.some(r => r.compnumb == currentRow.courseregistrationnumber)
-    if (crnExists) return true; // isValid
+    if (crnExists) { return true } // isValid
+
+    row.currentstatus = "Unfound CRN"
+    row.save()
 
 
     // declare email contents
-    let messageType = "Unfound CRN"
     let emailRecipient = currentRow.email
     let emailSubject = "Unfound CRN"
     let emailBody = `The system couldn't find the CRN provided. 
@@ -132,7 +134,7 @@ async function checkCRNIsValid(currentRow, rowsOfStaticCourseInfo) {
  
                      Here's the CRN the system was testing for: ${currentRow.courseregistrationnumber}`
     // call email function
-    sendEmail(emailSubject, emailBody, emailRecipient, currentRow, messageType)
+    sendEmail(emailSubject, emailBody, emailRecipient, currentRow)
 
 
     console.log("Invalid CRN")
@@ -170,6 +172,13 @@ async function checkIsCanceled(currentRow, rowsOfCancelationSheet, rowsOfStaticC
 
             isCanceled = true
 
+            // update gSheets
+            row.currentstatus = "Canceled"
+            row.save()
+            // also mark cancelation sheet
+            canceledRow.cancelationstatus = "Handled"
+            canceledRow.save()
+
             let rowOfCourseName = rowsOfStaticCourseInfo.find(dataRow => {
                 return dataRow.compnumb == canceledRow.courseregistrationnumber
             })
@@ -177,7 +186,6 @@ async function checkIsCanceled(currentRow, rowsOfCancelationSheet, rowsOfStaticC
             let courseName = rowOfCourseName.title
 
             // declare email contents
-            let messageType = "Canceled"
             let emailRecipient = currentRow.email
             let emailSubject = "Already Canceled Request"
             let emailBody = `I don't know how you managed it so quickly, but somehow your request already looks to be canceled.
@@ -185,7 +193,7 @@ async function checkIsCanceled(currentRow, rowsOfCancelationSheet, rowsOfStaticC
             <br/><br/>
             Here's the class your were looking at: <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${currentRow.courseregistrationnumber}">${courseName}</a>`
             // call email function
-            sendEmail(emailSubject, emailBody, emailRecipient, currentRow, messageType, canceledRow)
+            sendEmail(emailSubject, emailBody, emailRecipient, currentRow, canceledRow)
             console.log("Canceled")
 
 
@@ -208,6 +216,11 @@ async function checkIfIsUnique(currentRequestRow, rowsOfRequestSheet, rowsOfStat
     // if not found duplicate, we are unique - return valid
     if (!foundDuplicate) { return true }
 
+
+    // update gSheet
+    row.currentstatus = "Duplicate"
+    row.save()
+
     let rowOfCourseName = rowsOfStaticCourseInfo.find(dataRow => {
         return dataRow.compnumb == currentRequestRow.courseregistrationnumber
     })
@@ -216,7 +229,6 @@ async function checkIfIsUnique(currentRequestRow, rowsOfRequestSheet, rowsOfStat
 
 
     // declare email contents
-    let messageType = "Duplicate"
     let emailRecipient = currentRequestRow.email
     let emailSubject = "Duplicate Request"
     // TODO: give user the date of when we started checking
@@ -227,13 +239,13 @@ async function checkIfIsUnique(currentRequestRow, rowsOfRequestSheet, rowsOfStat
     <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${currentRequestRow.courseregistrationnumber}">${courseName}</a>`
 
     // call email function
-    sendEmail(emailSubject, emailBody, emailRecipient, currentRequestRow, messageType)
+    sendEmail(emailSubject, emailBody, emailRecipient, currentRequestRow)
 
     return false; //invalid
 }
 
 
-async function confirmedRequest(row, rowsOfStaticCourseInfo) {
+async function confirmRequest(row, rowsOfStaticCourseInfo) {
 
     // if current status is still default (left blank), begin checking
     if (row.currentstatus == "") {
@@ -246,20 +258,23 @@ async function confirmedRequest(row, rowsOfStaticCourseInfo) {
 
         let courseName = rowOfCourseName.title
 
+        // update gSheet
+        row.currentstatus = "Watching"
+        row.save()
+
 
         // declare email contents
-        let messageType = "Watching"
         let emailSubject = "Unwaitlist Confirmation"
         let emailBody = `Unwaitlist is now checking your course: <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${row.courseregistrationnumber}">${courseName}</a>`
         let emailRecipient = row.email
         // call email function
-        sendEmail(emailSubject, emailBody, emailRecipient, row, messageType)
+        sendEmail(emailSubject, emailBody, emailRecipient, row)
 
     }
 }
 
 // sends email with passed contents
-async function sendEmail(emailSubject, emailBody, emailRecipient, row, messageType, canceledRow) {
+async function sendEmail(emailSubject, emailBody, emailRecipient, row, canceledRow) {
 
     // begin working with nodemailer
     let transporter = nodemailer.createTransport({
@@ -284,31 +299,9 @@ async function sendEmail(emailSubject, emailBody, emailRecipient, row, messageTy
         if (error) {
             console.log(error);
         } else {
-            console.log(`${messageType} email sent to ${emailRecipient} --> ` + info.response);
+            console.log(`${emailSubject} email sent to ${emailRecipient} --> ` + info.response);
         }
     });
-
-
-    // update tracking status from in this email function
-    if (messageType == "Watching") {
-        row.currentstatus = messageType
-        row.save()
-    } else if (messageType == "Unfound CRN") {
-        row.currentstatus = messageType
-        row.save()
-    } else if (messageType == "Duplicate") {
-        row.currentstatus = messageType
-        row.save()
-    } else if (messageType == "Canceled") {
-        row.currentstatus = messageType
-        row.save()
-        // also mark cancelation sheet
-        canceledRow.cancelationstatus = "Handled"
-        canceledRow.save()
-    } else if (messageType == "Availablity notified") {
-        row.currentstatus = messageType
-        row.save()
-    }
 
 }
 
@@ -329,9 +322,11 @@ function checkIfAvailable(row, rowsOfStaticCourseInfo, allCourseData, openCourse
                 return dataRow.compnumb == row.courseregistrationnumber
             })
 
+            // update gSheet
+            row.currentstatus = "Availability notified"
+            row.save()
 
             // declare email contents
-            let messageType = "Availability notified"
             let courseName = rowOfCourseName.title
             let emailRecipient = row.email
             let emailSubject = "Your Course is Open!"
@@ -340,7 +335,7 @@ function checkIfAvailable(row, rowsOfStaticCourseInfo, allCourseData, openCourse
         Use this CRN to sign up: ${row.courseregistrationnumber}`
             // <br/><br/>
             // <img src="../Images/undraw_online_popularity_elhc.svg" alt="Confirmation Success Image"></img>
-            sendEmail(emailSubject, emailBody, emailRecipient, row, messageType)
+            sendEmail(emailSubject, emailBody, emailRecipient, row)
 
         }
 
