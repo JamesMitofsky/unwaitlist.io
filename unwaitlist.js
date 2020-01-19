@@ -104,7 +104,7 @@ async function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsO
             // check if canceled
             if (!checkIsCanceled(row, rowsOfCancelationSheet, rowsOfStaticCourseInfo)) { return }
             // if not canceled, check availability
-            checkIfAvailable(row, rowsOfStaticCourseInfo, allCourseData, openCourses)
+            checkIfAvailable(row, rowsOfStaticCourseInfo, openCourses)
         }
 
 
@@ -191,7 +191,7 @@ async function checkIsCanceled(currentRow, rowsOfCancelationSheet, rowsOfStaticC
             let emailBody = `Your cancelation request has been successfully processed. Unwaitlist is no longer tracking <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${currentRow.courseregistrationnumber}">${courseName}</a>
             If this is a mistake, definitely bop me on Twitter @JamesTedesco802.`
             // call email function
-            sendEmail(emailSubject, emailBody, emailRecipient, currentRow, canceledRow)
+            sendEmail(emailSubject, emailBody, emailRecipient, currentRow)
             console.log("Canceled")
 
 
@@ -266,13 +266,13 @@ async function confirmRequest(row, rowsOfStaticCourseInfo) {
         let emailBody = `Unwaitlist is now checking your course: <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${row.courseregistrationnumber}">${courseName}</a>`
         let emailRecipient = row.email
         // call email function
-        sendEmail(emailSubject, emailBody, emailRecipient, row)
+        sendEmail(emailSubject, emailBody, emailRecipient)
 
     }
 }
 
 // sends email with passed contents
-async function sendEmail(emailSubject, emailBody, emailRecipient, row, canceledRow) {
+async function sendEmail(emailSubject, emailBody, emailRecipient) {
 
     // begin working with nodemailer
     let transporter = nodemailer.createTransport({
@@ -304,7 +304,7 @@ async function sendEmail(emailSubject, emailBody, emailRecipient, row, canceledR
 }
 
 // checks to see if class has spot
-function checkIfAvailable(row, rowsOfStaticCourseInfo, allCourseData, openCourses) {
+function checkIfAvailable(row, rowsOfStaticCourseInfo, openCourses) {
 
 
     // loop through items of open courses object
@@ -333,7 +333,7 @@ function checkIfAvailable(row, rowsOfStaticCourseInfo, allCourseData, openCourse
         Use this CRN to sign up: ${row.courseregistrationnumber}`
             // <br/><br/>
             // <img src="../Images/undraw_online_popularity_elhc.svg" alt="Confirmation Success Image"></img>
-            sendEmail(emailSubject, emailBody, emailRecipient, row)
+            sendEmail(emailSubject, emailBody, emailRecipient)
 
         }
 
