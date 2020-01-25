@@ -101,7 +101,7 @@ async function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsO
             // if we've passed all the checks, process the row
             confirmRequest(row, rowsOfStaticCourseInfo)
         } else { // this checks classes if the initial request has already been handled
-            // check if canceled
+            // if canceled, no need to continue
             if (!checkIsCanceled(row, rowsOfCancelationSheet, rowsOfStaticCourseInfo)) { return }
             // if not canceled, check availability
             checkIfAvailable(row, rowsOfStaticCourseInfo, openCourses)
@@ -173,8 +173,8 @@ async function checkIsCanceled(currentRow, rowsOfCancelationSheet, rowsOfStaticC
             isCanceled = true
 
             // update gSheets
-            row.currentstatus = "Canceled"
-            row.save()
+            currentRow.currentstatus = "Canceled"
+            currentRow.save()
             // also mark cancelation sheet
             canceledRow.cancelationstatus = "Handled"
             canceledRow.save()
@@ -216,8 +216,8 @@ async function checkIfIsUnique(currentRequestRow, rowsOfRequestSheet, rowsOfStat
 
 
     // update gSheet
-    row.currentstatus = "Duplicate"
-    row.save()
+    currentRequestRow.currentstatus = "Duplicate"
+    currentRequestRow.save()
 
     let rowOfCourseName = rowsOfStaticCourseInfo.find(dataRow => {
         return dataRow.compnumb == currentRequestRow.courseregistrationnumber
