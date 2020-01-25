@@ -36,7 +36,8 @@ accessSpreadsheet()
 // async to open spreadsheet
 async function accessSpreadsheet() {
     let sheetId = '1DjsN1HiiS7Iv7lKNucjeoQ6aS0_291JAovZ0LfgOItM'
-    const doc = new GoogleSpreadsheet(sheetId);
+    let testId = '1wtHWjTTWn9LNp4r8_xJiGGiO-YV4PsoQ_gWTeahbUxs'
+    const doc = new GoogleSpreadsheet(testId);
 
     // pass credentials to doc
     await promisify(doc.useServiceAccountAuth)(creds);
