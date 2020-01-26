@@ -133,7 +133,9 @@ async function checkCRNIsValid(currentRow, rowsOfStaticCourseInfo) {
                      If you think something went wrong here, bop me on Twitter 
                      <a href="https://twitter.com/JamesTedesco802">@JamesTedesco802</a>.
  
-                     Here's the CRN the system was testing for: ${currentRow.courseregistrationnumber}`
+                     Here's the CRN the system was testing for: ${currentRow.courseregistrationnumber}
+                     <br/><br/>
+                     <img height="350" src="https://unwaitlist.io/email_assets/PNGs/unfound_CRN.png" alt="Unfound_CRN Image">`
     // call email function
     sendEmail(emailSubject, emailBody, emailRecipient, currentRow)
 
@@ -190,7 +192,9 @@ async function checkIsCanceled(currentRow, rowsOfCancelationSheet, rowsOfStaticC
             let emailRecipient = currentRow.email
             let emailSubject = "Cancelation Processed"
             let emailBody = `Your cancelation request has been successfully processed. Unwaitlist is no longer tracking <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${currentRow.courseregistrationnumber}">${courseName}</a>
-            If this is a mistake, definitely bop me on Twitter @JamesTedesco802.`
+            If this is a mistake, definitely bop me on Twitter @JamesTedesco802.
+            <br/><br/>
+            <img height="350" src="https://unwaitlist.io/email_assets/PNGs/canceled.png" alt="Canceled course image">`
             // call email function
             sendEmail(emailSubject, emailBody, emailRecipient, currentRow)
             console.log("Canceled")
@@ -231,14 +235,13 @@ async function checkIfIsUnique(currentRequestRow, rowsOfRequestSheet, rowsOfStat
     let emailRecipient = currentRequestRow.email
     let emailSubject = "Duplicate Request"
     // TODO: give user the date of when we started checking
-    let emailBody = `It looks like we're already checking this class for you, but if this is a mistake, 
+    let emailBody = `It looks like we're already checking <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${currentRequestRow.courseregistrationnumber}">${courseName}</a> for you, but if this is a mistake, 
     definitely bop me on Twitter <a href="https://twitter.com/JamesTedesco802">@JamesTedesco802</a>.
     <br/><br/>
-    Here's a link to the class your were looking at: 
-    <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${currentRequestRow.courseregistrationnumber}">${courseName}</a>`
+    <img height="350" src="https://unwaitlist.io/email_assets/PNGs/duplicate.png" alt="canceled test image">`
 
     // call email function
-    sendEmail(emailSubject, emailBody, emailRecipient, currentRequestRow)
+    sendEmail(emailSubject, emailBody, emailRecipient)
 
     return false; //invalid
 }
@@ -264,7 +267,9 @@ async function confirmRequest(row, rowsOfStaticCourseInfo) {
 
         // declare email contents
         let emailSubject = "Unwaitlist Confirmation"
-        let emailBody = `Unwaitlist is now checking your course: <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${row.courseregistrationnumber}">${courseName}</a>`
+        let emailBody = `Unwaitlist is now checking your course: <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${row.courseregistrationnumber}">${courseName}</a>
+        <br/><br/>
+        <img height="350" src="https://unwaitlist.io/email_assets/PNGs/confirmation_sent.png" alt="Gallant unicorn image">`
         let emailRecipient = row.email
         // call email function
         sendEmail(emailSubject, emailBody, emailRecipient)
