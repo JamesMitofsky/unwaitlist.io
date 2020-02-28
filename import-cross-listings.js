@@ -29,7 +29,8 @@ accessSpreadsheet()
 // async to open spreadsheet
 async function accessSpreadsheet() {
     let sheetId = '1DjsN1HiiS7Iv7lKNucjeoQ6aS0_291JAovZ0LfgOItM'
-    const doc = new GoogleSpreadsheet(sheetId);
+    let testId = '1wtHWjTTWn9LNp4r8_xJiGGiO-YV4PsoQ_gWTeahbUxs'
+    const doc = new GoogleSpreadsheet(testId);
 
     // pass credentials to doc
     await promisify(doc.useServiceAccountAuth)(creds);
@@ -103,10 +104,13 @@ function crossListingsToSpreadsheet(arrayOfCrossListings, rowsOfStaticCourseInfo
     arrayOfCrossListings.forEach(row => {
         rowsOfStaticCourseInfo.forEach(dataRow => {
             if (row[0] == dataRow.compnumb) {
-                // remove first CRN (which is the main course CRN)
-                let splicedCrossListings = row.slice(1)
+                // commented out to be make main program easier to write // removes first CRN (which is the main course CRN)
+                // let splicedCrossListings = row.slice(1)
                 // convert to string for spreadsheet reading
-                let formattedCrossListings = splicedCrossListings.toString()
+                // let formattedCrossListings = splicedCrossListings.toString()
+
+                // ship out array values as one string for the spreadsheet cell
+                let formattedCrossListings = row.toString()
 
                 // for some reason is losing the comma
                 dataRow.crosslistings = formattedCrossListings
@@ -129,14 +133,14 @@ function crossListingsToSpreadsheet(arrayOfCrossListings, rowsOfStaticCourseInfo
     //     }
     // })
 
-    mainList = []
-    rowsOfStaticCourseInfo.forEach(checkingRow => {
-        rowsOfStaticCourseInfo.forEach(row => {
-            if (checkingRow.compnumb == row.compnumb) {
-                mainList.push(checkingRow)
-            }
-        })
-    })
+    // mainList = []
+    // rowsOfStaticCourseInfo.forEach(checkingRow => {
+    //     rowsOfStaticCourseInfo.forEach(row => {
+    //         if (checkingRow.compnumb == row.compnumb) {
+    //             mainList.push(checkingRow)
+    //         }
+    //     })
+    // })
 
 
 

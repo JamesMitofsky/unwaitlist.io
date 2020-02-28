@@ -101,11 +101,14 @@ async function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsO
 
             // if we've passed all the checks, process the row
             confirmRequest(row, rowsOfStaticCourseInfo)
-        } else { // this checks classes if the initial request has already been handled
+        } else if (row.currentstatus == "Watching") { // check classes if the initial request has already been handled
             // if canceled, no need to continue
             if (!checkIsCanceled(row, rowsOfCancelationSheet, rowsOfStaticCourseInfo)) { return }
-            // if not canceled, check availability
-            checkIfAvailable(row, rowsOfStaticCourseInfo, openCourses)
+            // if available, end here, because no need to get double confirmation with cross listings
+            if (!checkIsAvailable(row, rowsOfStaticCourseInfo, openCourses, row.courseregistrationnumber)) { return }
+            
+            // UNDER_DEVELOPMENT: if unavailable or unwatched from last function, try this
+            checkCrossListingAvailability(row, rowsOfStaticCourseInfo, openCourses)
         }
 
 
@@ -298,53 +301,59 @@ async function sendEmail(emailSubject, emailBody, emailRecipient) {
         html: emailBody
     };
 
+    //pretend email
+    console.log(`Pretend email sent to ${emailRecipient} with subject: ${emailSubject}\n${emailBody}\n\n`)
+
     // send email - fire & forget
-    transporter.sendMail(mailOptions, function (error, info) {
-        if (error) {
-            console.log(error);
-        } else {
-            console.log(`${emailSubject} email sent to ${emailRecipient} --> ` + info.response);
-        }
-    });
+    // transporter.sendMail(mailOptions, function (error, info) {
+    //     if (error) {
+    //         console.log(error);
+    //     } else {
+    //         console.log(`${emailSubject} email sent to ${emailRecipient} --> ` + info.response);
+    //     }
+    // });
 
 }
 
 // checks to see if class has spot
-function checkIfAvailable(row, rowsOfStaticCourseInfo, openCourses) {
+function checkIsAvailable(row, rowsOfStaticCourseInfo, openCourses, CRN) {
 
 
     // loop through items of open courses object
     openCourses.forEach(openCourse => {
 
         // if course is open and status is marked as watching, email student
-        let courseHasAvailability = row.courseregistrationnumber == openCourse.crn
+        let courseHasAvailability = CRN == openCourse.crn
+        // may not need this condition since there's already a check where this function is called
         let courseIsBeingWatched = row.currentstatus == "Watching"
-        if (courseHasAvailability && courseIsBeingWatched) {
+        // if the course is neither available nor being watched, step out of function
+        if (!courseHasAvailability || !courseIsBeingWatched) { return false }
 
 
-            let rowOfCourseName = rowsOfStaticCourseInfo.find(dataRow => {
-                return dataRow.compnumb == row.courseregistrationnumber
-            })
+        let rowOfCourseName = rowsOfStaticCourseInfo.find(dataRow => {
+            return dataRow.compnumb == row.courseregistrationnumber
+        })
 
-            // update gSheet
-            row.currentstatus = "Availability notified"
-            row.save()
+        // update gSheet
+        row.currentstatus = "Availability notified"
+        row.save()
 
-            // declare email contents
-            let courseName = rowOfCourseName.title
-            let emailRecipient = row.email
-            let emailSubject = "Your Course is Open!"
-            let emailBody = `Your class, <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${row.courseregistrationnumber}">${courseName}</a>, now has availability.
-        <br/><br/>
-        Use this CRN to sign up: ${row.courseregistrationnumber}`
-            // <br/><br/>
-            // <img src="../Images/undraw_online_popularity_elhc.svg" alt="Confirmation Success Image"></img>
-            sendEmail(emailSubject, emailBody, emailRecipient)
+        // declare email contents
+        let courseName = rowOfCourseName.title
+        let emailRecipient = row.email
+        let emailSubject = "Your Course is Open!"
+        let emailBody = `Your class, <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${row.courseregistrationnumber}">${courseName}</a>, now has availability.
+    <br/><br/>
+    Use this CRN to sign up: ${row.courseregistrationnumber}
+    <br/><br/>
+    <img height="350" src="https://unwaitlist.io/email_assets/PNGs/notified.png" alt="canceled test image">`
+        sendEmail(emailSubject, emailBody, emailRecipient)
 
-        }
 
     })
 
+    // course has availability
+    return true
 
 }
 
@@ -433,4 +442,41 @@ function getProcessedCourseInfo(unprocessedData) {
         openCourses,
         closedCourses
     ]
+}
+
+
+function checkCrossListingAvailability(row, rowsOfStaticCourseInfo, openCourses) {
+
+    let arrayOfCrossListings = []
+    rowsOfStaticCourseInfo.forEach(staticDataRow => {
+        // if the cell isn't empty
+        if (staticDataRow.crosslistings.length > 0) {
+            // removes commas
+            let crossListingCell = staticDataRow.crosslistings.replace(/,/g,"");
+            // identifies the number of CRNs (because one CRN is 5 digits)
+            let numberOfListings = crossListingCell.length / 5;
+            // matches digits at intervals of 5 through the entire string -> loads these into array
+            let rowOfCrossListings = crossListingCell.match(/\d{5}/g);
+            arrayOfCrossListings.push(rowOfCrossListings)
+        }
+    })
+
+    // if rowRequestCRN matches crossListingCRN
+        // && crossListingCRN is open
+
+
+
+    arrayOfCrossListings.forEach(crossListingItem => {
+        if (crossListingItem[0] == row.courseregistrationnumber) {
+            console.log(crossListingItem)
+            
+            crossListingItem.forEach(courseNum => {
+                // if not the main class which has already been checked, check other cross listing numbers
+                if (courseNum != crossListingItem[0]) {
+                    checkIsAvailable(row, rowsOfStaticCourseInfo, openCourses, courseNum)
+                }
+            })
+        }
+    })
+
 }
