@@ -11,7 +11,7 @@ const { promisify } = require('util');
 const nodemailer = require('nodemailer');
 // require environment variables
 require('dotenv').config()
-// website loading
+    // website loading
 const axios = require("axios");
 
 // build credential object
@@ -70,11 +70,11 @@ async function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsO
 
     // declare enrollment csv location
     const csvFile = "https://giraffe.uvm.edu/~rgweb/batch/curr_enroll_spring.txt"
-    // fall enrollment: https://giraffe.uvm.edu/~rgweb/batch/curr_enroll_fall.txt
-    
+        // fall enrollment: https://giraffe.uvm.edu/~rgweb/batch/curr_enroll_fall.txt
+
     // open and parse csvFile into object
     const allCourseData = await getCourseInfo(csvFile)
-    // process allCourseData into open/closed catagorizations
+        // process allCourseData into open/closed catagorizations
     const [openCourses, closedCourses] = await getProcessedCourseInfo(allCourseData)
 
 
@@ -83,10 +83,10 @@ async function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsO
 
         // check if we need to process, otherwise leave immediately
         let rowHasData = row.courseregistrationnumber != ""
-        // if currentStatus is blank, user hasn't been processed - testing to phase out the confirmation sent column
+            // if currentStatus is blank, user hasn't been processed - testing to phase out the confirmation sent column
         let confirmationNotSent = row.currentstatus == ""
         let unhandledRequest = rowHasData && confirmationNotSent
-        // if the request has already been handled, check if duplicate or unique
+            // if the request has already been handled, check if duplicate or unique
         if (unhandledRequest) {
             console.log("\nEntered new section: missing confirmation\n")
 
@@ -106,7 +106,7 @@ async function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsO
             if (!checkIsCanceled(row, rowsOfCancelationSheet, rowsOfStaticCourseInfo)) { return }
             // if available, end here, because no need to get double confirmation with cross listings
             if (!checkIsAvailable(row, rowsOfStaticCourseInfo, openCourses, row.courseregistrationnumber)) { return }
-            
+
             // UNDER_DEVELOPMENT: if unavailable or unwatched from last function, try this
             checkCrossListingAvailability(row, rowsOfStaticCourseInfo, openCourses)
         }
@@ -139,7 +139,7 @@ async function checkCRNIsValid(currentRow, rowsOfStaticCourseInfo) {
                      Here's the CRN the system was testing for: ${currentRow.courseregistrationnumber}
                      <br/><br/>
                      <img height="350" src="https://unwaitlist.io/email_assets/PNGs/unfound_CRN.png" alt="Unfound_CRN Image">`
-    // call email function
+        // call email function
     sendEmail(emailSubject, emailBody, emailRecipient, currentRow)
 
 
@@ -168,8 +168,8 @@ async function checkIsCanceled(currentRow, rowsOfCancelationSheet, rowsOfStaticC
         // helps make if statement criteria human readable
         let sameEmail = canceledRow.email == currentRow.email
         let sameCRN = canceledRow.courseregistrationnumber == currentRow.courseregistrationnumber
-        // not needed because field will be blank since the request is new
-        // let stillActive = currentRow.currentstatus == "Watching"
+            // not needed because field will be blank since the request is new
+            // let stillActive = currentRow.currentstatus == "Watching"
         let notHandled = canceledRow.cancelationstatus != "Handled"
         let cancelationRequested = sameEmail && sameCRN && notHandled
 
@@ -181,7 +181,7 @@ async function checkIsCanceled(currentRow, rowsOfCancelationSheet, rowsOfStaticC
             // update gSheets
             currentRow.currentstatus = "Canceled"
             currentRow.save()
-            // also mark cancelation sheet
+                // also mark cancelation sheet
             canceledRow.cancelationstatus = "Handled"
             canceledRow.save()
 
@@ -198,7 +198,7 @@ async function checkIsCanceled(currentRow, rowsOfCancelationSheet, rowsOfStaticC
             If this is a mistake, definitely bop me on Twitter @JamesTedesco802.
             <br/><br/>
             <img height="350" src="https://unwaitlist.io/email_assets/PNGs/canceled.png" alt="Canceled course image">`
-            // call email function
+                // call email function
             sendEmail(emailSubject, emailBody, emailRecipient, currentRow)
             console.log("Canceled")
 
@@ -237,7 +237,7 @@ async function checkIfIsUnique(currentRequestRow, rowsOfRequestSheet, rowsOfStat
     // declare email contents
     let emailRecipient = currentRequestRow.email
     let emailSubject = "Duplicate Request"
-    // TODO: give user the date of when we started checking
+        // TODO: give user the date of when we started checking
     let emailBody = `It looks like we're already checking <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${currentRequestRow.courseregistrationnumber}">${courseName}</a> for you, but if this is a mistake, 
     definitely bop me on Twitter <a href="https://twitter.com/JamesTedesco802">@JamesTedesco802</a>.
     <br/><br/>
@@ -274,7 +274,7 @@ async function confirmRequest(row, rowsOfStaticCourseInfo) {
         <br/><br/>
         <img height="350" src="https://unwaitlist.io/email_assets/PNGs/confirmation_sent.png" alt="Gallant unicorn image">`
         let emailRecipient = row.email
-        // call email function
+            // call email function
         sendEmail(emailSubject, emailBody, emailRecipient)
 
     }
@@ -324,9 +324,9 @@ function checkIsAvailable(row, rowsOfStaticCourseInfo, openCourses, CRN) {
 
         // if course is open and status is marked as watching, email student
         let courseHasAvailability = CRN == openCourse.crn
-        // may not need this condition since there's already a check where this function is called
+            // may not need this condition since there's already a check where this function is called
         let courseIsBeingWatched = row.currentstatus == "Watching"
-        // if the course is neither available nor being watched, step out of function
+            // if the course is neither available nor being watched, step out of function
         if (!courseHasAvailability || !courseIsBeingWatched) { return false }
 
 
@@ -372,11 +372,11 @@ async function getCourseInfo(csvLink) {
 
     // set url parameters
     const baseURL = "https://www.uvm.edu/academics/courses/?term=202001&crn="
-    // will contain cell information from upcoming loop
+        // will contain cell information from upcoming loop
     let csvRowCells = []
-    // stores all class info
+        // stores all class info
     let allCourses = []
-    // indexer
+        // indexer
     let courseListPosition = 0
 
     // split rows into cells
@@ -447,36 +447,41 @@ function getProcessedCourseInfo(unprocessedData) {
 
 function checkCrossListingAvailability(row, rowsOfStaticCourseInfo, openCourses) {
 
+    // convert xListing info from spreadsheet to array
     let arrayOfCrossListings = []
     rowsOfStaticCourseInfo.forEach(staticDataRow => {
-        // if the cell isn't empty
-        if (staticDataRow.crosslistings.length > 0) {
-            // removes commas
-            let crossListingCell = staticDataRow.crosslistings.replace(/,/g,"");
-            // identifies the number of CRNs (because one CRN is 5 digits)
-            let numberOfListings = crossListingCell.length / 5;
-            // matches digits at intervals of 5 through the entire string -> loads these into array
-            let rowOfCrossListings = crossListingCell.match(/\d{5}/g);
-            arrayOfCrossListings.push(rowOfCrossListings)
-        }
+
+        // if cell is empty, cancel function
+        if (staticDataRow.crosslistings.length == 0) { return }
+
+        // remove commas from spreadsheet cell
+        let crossListingCell = staticDataRow.crosslistings.replace(/,/g, "");
+
+        // match digits at intervals of 5 through the entire string
+        let rowOfCrossListings = crossListingCell.match(/\d{5}/g);
+        // load these segments as array items
+        arrayOfCrossListings.push(rowOfCrossListings)
+
     })
 
-    // if rowRequestCRN matches crossListingCRN
-        // && crossListingCRN is open
 
+    // for each cross listing cell, seek through all items
+    arrayOfCrossListings.forEach(crossListingGroup => {
 
+        // if main CRN of xListing array doesn't match request CRN, end function
+        if (crossListingGroup[0] != row.courseregistrationnumber) { return }
 
-    arrayOfCrossListings.forEach(crossListingItem => {
-        if (crossListingItem[0] == row.courseregistrationnumber) {
-            console.log(crossListingItem)
-            
-            crossListingItem.forEach(courseNum => {
-                // if not the main class which has already been checked, check other cross listing numbers
-                if (courseNum != crossListingItem[0]) {
-                    checkIsAvailable(row, rowsOfStaticCourseInfo, openCourses, courseNum)
-                }
-            })
-        }
+        // request CRN matches, so check entire xListing Group
+        crossListingGroup.forEach(courseNum => {
+
+            // skip the first CRN (it's the main request & has already been checked)
+            if (courseNum == crossListingGroup[0]) { return }
+
+            // print true/false based on availability of all other xListings
+            console.log(checkIsAvailable(row, rowsOfStaticCourseInfo, openCourses, courseNum))
+
+        })
+
     })
 
 }
