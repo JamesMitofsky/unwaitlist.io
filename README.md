@@ -7,7 +7,7 @@ Gotta scrape 'n send that waitlist info: __unwaitlist.io__
 ### Install NPM packages
 
 ```bash
-npm install require cheerio nodemailer twilio dotenv googleapis@39 google-spreadsheet
+npm i require cheerio nodemailer twilio dotenv googleapis@39 google-spreadsheet
 ```
 
 
@@ -36,19 +36,22 @@ client_x509_cert_url=***
 ```
 
 
-
 ## Run
 
-You can run the following two commands
+- Here's a Google Spreadsheet for testing: [this google sheet](https://docs.google.com/spreadsheets/d/1wtHWjTTWn9LNp4r8_xJiGGiO-YV4PsoQ_gWTeahbUxs/edit?usp=sharing)
+- To start the program, you can run the following command, thanks to [NPM Scripts](https://www.freecodecamp.org/news/introduction-to-npm-scripts-1dbb2ae01633/) 
 
 ```bash
-npm run sheets
-npm run course
+npm run unwait
 ```
 
-Sheets will update [this google sheet](https://docs.google.com/spreadsheets/d/1DjsN1HiiS7Iv7lKNucjeoQ6aS0_291JAovZ0LfgOItM/edit?ts=5e121e54)
 
-## Project Resource Catalog
+# Project Resource Catalog
+
+## TODO
+
+- List all classes being checked each time user requests another course. For example, if their third request was phil, the follow-up email would confirm phil and list the other two pending courses.
+- On initial request, check if the course has other cross listed CRNs that also should be getting checked.
 
 ## Azure Functions: free, cloud-based execution
 
@@ -99,6 +102,9 @@ Sheets will update [this google sheet](https://docs.google.com/spreadsheets/d/1D
 
 - Online, visit the [Google Dev Console](https://console.developers.google.com/apis/dashboard) and create a service worker
 - Share your spreadsheet with the service worker's email
+- Here's a Google Spreadsheet for testing: [this google sheet](https://docs.google.com/spreadsheets/d/1wtHWjTTWn9LNp4r8_xJiGGiO-YV4PsoQ_gWTeahbUxs/edit?usp=sharing)
+
+
 
 ### Usage
 
@@ -107,28 +113,25 @@ Sheets will update [this google sheet](https://docs.google.com/spreadsheets/d/1D
 - Caution: don't fully understand this, but it seems to ensure a save ONLY when it is the last statement to be evaluated in a function. You can force a save to happen immediately with `await promisify(row.save)()` instead of `row.save()`. My experience otherwise has been that it will end the function wherever you call promisify from.
 
 
-## Considerations beyond the code
 
-- Set Twilio number as emergency contact which can override Do Not Disturb and Silent
 
-## TODO
+# Code Styles / Conventions
 
-- Add environment variable tracking in Azure functions.
-- Make checking spreadsheet separate from request spreadsheet. This will help with multiple class check requests.
-- Have the program check if a CRN exists before registering it on the request sheet and sending a confirmation.
 
-## Resources
 
-### Code Styles / Conventions
+## Decrease Cyclomatic Complexity
 
-* Boolean Values should always be verb questions that have yes/no answer (ex. `isRegNumInvalid`)
-  * Preference for interpretation should be default is false
-  * State things in the affirmative ex. prefer `IsTrue` to `IsUntrue`
+* Cyclomatic Complexity - number of different possible paths, level of nesting, indentation
 
-**Cyclomatic Complexity** - number of different possible paths, level of nesting, indentation
+**Example Good**: Cyclomatic Complexity = 1 (with _Early Termination_ (ET))
+```js
+if (!someCondition) return
+if (!newCondition) return
+if (!nextCondition) return
+// do something
+```
 
 **Example Bad**: Cyclomatic Complexity = 3
-
 ```js
 if (someCondition) {
     if (newCondition) {
@@ -139,6 +142,8 @@ if (someCondition) {
 }
 ```
 
+
+## Scope based naming
 * Variable name length can get smaller as you limit the scope of that variable
 
 **Example**:
@@ -148,17 +153,7 @@ cosnt USER_ROW_INFO = ""
 let row = allRows.find(r => r.id === ID)
 ```
 
-**Example Good**: Cyclomatic Complexity = 1 (with _Early Termination_ (ET))
-
-```js
-if (!someCondition) return
-if (!newCondition) return
-if (!nextCondition) return
-
-// do something
-```
-
-### JavaScript Brackets
+## JavaScript Brackets
 
 For guarded if statements, use brackets (just as style convention)
 
@@ -167,15 +162,22 @@ if (!duplicateRow) return true      // bad
 if (!duplicateRow) { return true }  // good
 ```
 
-### Avoid Yoda Conditions
+## Avoid Yoda Conditions
 
-Try to place the target of the investigation as the first term/expersion in an comparison operator
+Try to place the target of the investigation as the first term/expression in a comparison operator
 
-**Bad**:  `7 === x` - reads as "Does 7 equal x?"
-**Good**: `x === 7` - reads as "Does 'x' equal 7?"
+* Good: `x === 7` - reads as "Does 'x' equal 7?"
+
+* Bad:  `7 === x` - reads as "Does 7 equal x?"
+
+## Frame Booleans Affirmatively
+
+* Boolean Values should always be verb questions that have yes/no answer (ex. `isRegNumInvalid`)
+  * Preference for interpretation should be default is false
+  * State things in the affirmative ex. prefer `IsTrue` to `IsUntrue`
 
 
-### JavaScript Array Examples
+## JavaScript Array Examples
 
 ```js
 var array = [{compnum: "13113"}, {compnum: "45345"}, {compnum: "34534"}]

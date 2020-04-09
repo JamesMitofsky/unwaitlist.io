@@ -4,8 +4,7 @@
     "description": "Gotta scrape 'n send that waitlist info: __unwaitlist.io__",
     "main": "unwaitlist-course-checking.js",
     "scripts": {
-        "course": "node unwaitlist-course-checking.js",
-        "sheets": "node unwaitlist-gsheets.js"
+        "unwait": "node unwaitlist.js"
     },
     "repository": {
         "type": "git",

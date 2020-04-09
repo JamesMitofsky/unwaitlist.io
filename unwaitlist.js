@@ -447,11 +447,11 @@ function getProcessedCourseInfo(unprocessedData) {
 
 function checkCrossListingAvailability(row, rowsOfStaticCourseInfo, openCourses) {
 
-    // convert xListing info from spreadsheet to array
+    // convert xListings from spreadsheet to array
     let arrayOfCrossListings = []
     rowsOfStaticCourseInfo.forEach(staticDataRow => {
 
-        // if cell is empty, cancel function
+        // if cell is empty, end function
         if (staticDataRow.crosslistings.length == 0) { return }
 
         // remove commas from spreadsheet cell
@@ -459,13 +459,13 @@ function checkCrossListingAvailability(row, rowsOfStaticCourseInfo, openCourses)
 
         // match digits at intervals of 5 through the entire string
         let rowOfCrossListings = crossListingCell.match(/\d{5}/g);
+
         // load these segments as array items
         arrayOfCrossListings.push(rowOfCrossListings)
-
     })
 
 
-    // for each cross listing cell, seek through all items
+    // for each xListing cell, seek through all items
     arrayOfCrossListings.forEach(crossListingGroup => {
 
         // if main CRN of xListing array doesn't match request CRN, end function
