@@ -36,7 +36,7 @@ client_x509_cert_url=***
 ```
 
 
-## Run
+### Run
 
 - Here's a Google Spreadsheet for testing: [this google sheet](https://docs.google.com/spreadsheets/d/1wtHWjTTWn9LNp4r8_xJiGGiO-YV4PsoQ_gWTeahbUxs/edit?usp=sharing)
 - To start the program, you can run the following command, thanks to [NPM Scripts](https://www.freecodecamp.org/news/introduction-to-npm-scripts-1dbb2ae01633/) 
