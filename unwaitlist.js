@@ -2,7 +2,6 @@
 //              made. If one has, then email the user with an email confirming their registration
 //              or acknowledging that their CRN does not exist.
 
-// npm install googleapis@39 --save nodemailer dotenv
 
 // require google sheets
 const GoogleSpreadsheet = require('google-spreadsheet');
@@ -13,6 +12,10 @@ const nodemailer = require('nodemailer');
 require('dotenv').config()
     // website loading
 const axios = require("axios");
+//  Twilio credentials
+const accountSid = process.env.TWILIO_SID;
+const authToken = process.env.TWILIO_TOKEN;
+const client = require('twilio')(accountSid, authToken);
 
 // build credential object
 let creds = {
@@ -37,7 +40,9 @@ accessSpreadsheet()
 async function accessSpreadsheet() {
     let sheetId = '1DjsN1HiiS7Iv7lKNucjeoQ6aS0_291JAovZ0LfgOItM'
     let testId = '1wtHWjTTWn9LNp4r8_xJiGGiO-YV4PsoQ_gWTeahbUxs'
-    const doc = new GoogleSpreadsheet(testId);
+
+    // IMPORTANT: connecting to test or actual doc
+    const doc = new GoogleSpreadsheet(sheetId);
 
     // pass credentials to doc
     await promisify(doc.useServiceAccountAuth)(creds);
@@ -54,7 +59,7 @@ async function accessSpreadsheet() {
     // declare rows objects
     const rowsOfRequestSheet = await promisify(requestSheet.getRows)({});
     const rowsOfCancelationSheet = await promisify(cancelationSheet.getRows)({})
-    const rowsOfStaticCourseInfo = await promisify(staticCourseInfoSheet.getRows)({}) // todo: replace this with locally stored data
+    const rowsOfStaticCourseInfo = await promisify(staticCourseInfoSheet.getRows)({}) // TODO (maybe): replace this with locally stored data
 
     console.log("Connected...")
 
@@ -69,8 +74,9 @@ async function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsO
 
 
     // declare enrollment csv location
-    const csvFile = "https://giraffe.uvm.edu/~rgweb/batch/curr_enroll_spring.txt"
+    const csvFile = "https://giraffe.uvm.edu/~rgweb/batch/curr_enroll_fall.txt"
         // fall enrollment: https://giraffe.uvm.edu/~rgweb/batch/curr_enroll_fall.txt
+        // spring enrollment: https://giraffe.uvm.edu/~rgweb/batch/curr_enroll_spring.txt
 
     // open and parse csvFile into object
     const allCourseData = await getCourseInfo(csvFile)
@@ -93,6 +99,7 @@ async function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsO
             // check if class is canceled, otherwise leave immediately
             if (!checkIsCanceled(row, rowsOfCancelationSheet, rowsOfStaticCourseInfo)) { return }
 
+            // TODO: import all course names locally so this can be reactivated
             //  if CRN does not exist, then exit immediately
             if (!checkCRNIsValid(row, rowsOfStaticCourseInfo)) { return }
 
@@ -101,14 +108,14 @@ async function evaluateRequest(rowsOfRequestSheet, rowsOfCancelationSheet, rowsO
 
             // if we've passed all the checks, process the row
             confirmRequest(row, rowsOfStaticCourseInfo)
-        } else if (row.currentstatus == "Watching") { // check classes if the initial request has already been handled
+        } else if (row.currentstatus == "Watching") { // check class only if the initial request has already been handled
             // if canceled, no need to continue
             if (!checkIsCanceled(row, rowsOfCancelationSheet, rowsOfStaticCourseInfo)) { return }
             // if available, end here, because no need to get double confirmation with cross listings
             if (!checkIsAvailable(row, rowsOfStaticCourseInfo, openCourses, row.courseregistrationnumber)) { return }
 
             // UNDER_DEVELOPMENT: if unavailable or unwatched from last function, try this
-            checkCrossListingAvailability(row, rowsOfStaticCourseInfo, openCourses)
+            // checkCrossListingAvailability(row, rowsOfStaticCourseInfo, openCourses)
         }
 
 
@@ -124,8 +131,8 @@ async function checkCRNIsValid(currentRow, rowsOfStaticCourseInfo) {
     let crnExists = rowsOfStaticCourseInfo.some(r => r.compnumb == currentRow.courseregistrationnumber)
     if (crnExists) { return true } // isValid
 
-    row.currentstatus = "Unfound CRN"
-    row.save()
+    currentRow.currentstatus = "Unfound CRN"
+    currentRow.save()
 
 
     // declare email contents
@@ -140,7 +147,7 @@ async function checkCRNIsValid(currentRow, rowsOfStaticCourseInfo) {
                      <br/><br/>
                      <img height="350" src="https://unwaitlist.io/email_assets/PNGs/unfound_CRN.png" alt="Unfound_CRN Image">`
         // call email function
-    sendEmail(emailSubject, emailBody, emailRecipient, currentRow)
+    contactUser(emailSubject, emailBody, emailRecipient)
 
 
     console.log("Invalid CRN")
@@ -194,12 +201,12 @@ async function checkIsCanceled(currentRow, rowsOfCancelationSheet, rowsOfStaticC
             // declare email contents
             let emailRecipient = currentRow.email
             let emailSubject = "Cancelation Processed"
-            let emailBody = `Your cancelation request has been successfully processed. Unwaitlist is no longer tracking <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${currentRow.courseregistrationnumber}">${courseName}</a>
+            let emailBody = `Your cancelation request has been successfully processed. Unwaitlist is no longer tracking <a href="https://www.uvm.edu/academics/courses/?term=202009&crn=${currentRow.courseregistrationnumber}">${courseName}</a>
             If this is a mistake, definitely bop me on Twitter @JamesTedesco802.
             <br/><br/>
             <img height="350" src="https://unwaitlist.io/email_assets/PNGs/canceled.png" alt="Canceled course image">`
                 // call email function
-            sendEmail(emailSubject, emailBody, emailRecipient, currentRow)
+            contactUser(emailSubject, emailBody, emailRecipient)
             console.log("Canceled")
 
 
@@ -238,13 +245,13 @@ async function checkIfIsUnique(currentRequestRow, rowsOfRequestSheet, rowsOfStat
     let emailRecipient = currentRequestRow.email
     let emailSubject = "Duplicate Request"
         // TODO: give user the date of when we started checking
-    let emailBody = `It looks like we're already checking <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${currentRequestRow.courseregistrationnumber}">${courseName}</a> for you, but if this is a mistake, 
+    let emailBody = `It looks like we're already checking <a href="https://www.uvm.edu/academics/courses/?term=202009&crn=${currentRequestRow.courseregistrationnumber}">${courseName}</a> for you, but if this is a mistake, 
     definitely bop me on Twitter <a href="https://twitter.com/JamesTedesco802">@JamesTedesco802</a>.
     <br/><br/>
     <img height="350" src="https://unwaitlist.io/email_assets/PNGs/duplicate.png" alt="canceled test image">`
 
     // call email function
-    sendEmail(emailSubject, emailBody, emailRecipient)
+    contactUser(emailSubject, emailBody, emailRecipient)
 
     return false; //invalid
 }
@@ -263,6 +270,7 @@ async function confirmRequest(row, rowsOfStaticCourseInfo) {
 
         let courseName = rowOfCourseName.title
 
+
         // update gSheet
         row.currentstatus = "Watching"
         row.save()
@@ -270,50 +278,18 @@ async function confirmRequest(row, rowsOfStaticCourseInfo) {
 
         // declare email contents
         let emailSubject = "Unwaitlist Confirmation"
-        let emailBody = `Unwaitlist is now checking your course: <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${row.courseregistrationnumber}">${courseName}</a>
+        let emailBody = `Sorry for the delay - was just bopping through the code.
+        <br/><br/>
+        Unwaitlist is now checking your course: <a href="https://www.uvm.edu/academics/courses/?term=202009&crn=${row.courseregistrationnumber}">${courseName}</a>
         <br/><br/>
         <img height="350" src="https://unwaitlist.io/email_assets/PNGs/confirmation_sent.png" alt="Gallant unicorn image">`
         let emailRecipient = row.email
             // call email function
-        sendEmail(emailSubject, emailBody, emailRecipient)
+        contactUser(emailSubject, emailBody, emailRecipient)
 
     }
 }
 
-// sends email with passed contents
-async function sendEmail(emailSubject, emailBody, emailRecipient) {
-
-    // begin working with nodemailer
-    let transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-        }
-    });
-
-    // declare email content
-    let mailOptions = {
-        from: 'unwaitlist.io@gmail.com',
-        // set user email
-        to: emailRecipient,
-        subject: emailSubject,
-        html: emailBody
-    };
-
-    //pretend email
-    console.log(`Pretend email sent to ${emailRecipient} with subject: ${emailSubject}\n${emailBody}\n\n`)
-
-    // send email - fire & forget
-    // transporter.sendMail(mailOptions, function (error, info) {
-    //     if (error) {
-    //         console.log(error);
-    //     } else {
-    //         console.log(`${emailSubject} email sent to ${emailRecipient} --> ` + info.response);
-    //     }
-    // });
-
-}
 
 // checks to see if class has spot
 function checkIsAvailable(row, rowsOfStaticCourseInfo, openCourses, CRN) {
@@ -324,10 +300,9 @@ function checkIsAvailable(row, rowsOfStaticCourseInfo, openCourses, CRN) {
 
         // if course is open and status is marked as watching, email student
         let courseHasAvailability = CRN == openCourse.crn
-            // may not need this condition since there's already a check where this function is called
-        let courseIsBeingWatched = row.currentstatus == "Watching"
-            // if the course is neither available nor being watched, step out of function
-        if (!courseHasAvailability || !courseIsBeingWatched) { return false }
+
+        // if the course is unavailable, step out of function
+        if (!courseHasAvailability) { return false }
 
 
         let rowOfCourseName = rowsOfStaticCourseInfo.find(dataRow => {
@@ -340,14 +315,16 @@ function checkIsAvailable(row, rowsOfStaticCourseInfo, openCourses, CRN) {
 
         // declare email contents
         let courseName = rowOfCourseName.title
+        let cellNumber = row.phonenumber
+        let textMsg = `Your Course is Open! Here's the CRN: ${row.courseregistrationnumber}`
         let emailRecipient = row.email
         let emailSubject = "Your Course is Open!"
-        let emailBody = `Your class, <a href="https://www.uvm.edu/academics/courses/?term=202001&crn=${row.courseregistrationnumber}">${courseName}</a>, now has availability.
+        let emailBody = `Your class, <a href="https://www.uvm.edu/academics/courses/?term=202009&crn=${row.courseregistrationnumber}">${courseName}</a>, now has availability.
     <br/><br/>
     Use this CRN to sign up: ${row.courseregistrationnumber}
     <br/><br/>
     <img height="350" src="https://unwaitlist.io/email_assets/PNGs/notified.png" alt="canceled test image">`
-        sendEmail(emailSubject, emailBody, emailRecipient)
+        contactUser(emailSubject, emailBody, emailRecipient, cellNumber, textMsg)
 
 
     })
@@ -371,7 +348,7 @@ async function getCourseInfo(csvLink) {
     csvRows = csvDoc.replace(/"/g, '').split('\n')
 
     // set url parameters
-    const baseURL = "https://www.uvm.edu/academics/courses/?term=202001&crn="
+    const baseURL = "https://www.uvm.edu/academics/courses/?term=202009&crn="
         // will contain cell information from upcoming loop
     let csvRowCells = []
         // stores all class info
@@ -484,4 +461,43 @@ function checkCrossListingAvailability(row, rowsOfStaticCourseInfo, openCourses)
 
     })
 
+}
+
+// sends email with passed contents
+async function contactUser(emailSubject, emailBody, emailRecipient, cellNumber, textMsg) {
+
+    // begin working with nodemailer
+    let transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
+        }
+    });
+    // declare email content
+    let mailOptions = {
+        from: 'unwaitlist.io@gmail.com',
+        // set user email
+        to: emailRecipient,
+        subject: emailSubject,
+        html: emailBody
+    };
+
+    //pretend email
+    // console.log(`Pretend email sent to ${emailRecipient} with subject: ${emailSubject}\n${emailBody}\n\n`)
+
+    // send email - fire & forget
+    transporter.sendMail(mailOptions, function(error, info) {
+        if (error) {
+            console.log(error);
+        } else {
+            console.log(`${emailSubject} email sent to ${emailRecipient} --> ` + info.response);
+        }
+    });
+
+    if (emailSubject == "Your Course is Open!") {
+        client.messages
+            .create({ body: textMsg, from: '+18022103669 ', to: cellNumber })
+            .then(message => console.log(message.sid));
+    }
 }

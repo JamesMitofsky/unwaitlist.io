@@ -39,7 +39,8 @@ client_x509_cert_url=***
 ### Run
 
 - Here's a Google Spreadsheet for testing: [this google sheet](https://docs.google.com/spreadsheets/d/1wtHWjTTWn9LNp4r8_xJiGGiO-YV4PsoQ_gWTeahbUxs/edit?usp=sharing)
-- To start the program, you can run the following command, thanks to [NPM Scripts](https://www.freecodecamp.org/news/introduction-to-npm-scripts-1dbb2ae01633/) 
+- To start the program, you can run the following command, thanks to [NPM Scripts](https://www.freecodecamp.org/news/introduction-to-npm-scripts-1dbb2ae01633/)
+- You'll also have to either import the current semester's course data to the spreadsheet or comment out that function
 
 ```bash
 npm run unwait
@@ -49,6 +50,7 @@ npm run unwait
 # Project Resource Catalog
 
 ## TODO
+**Issues requiring immediate attention are flagged in the code by "TODO"**
 
 - List all classes being checked each time user requests another course. For example, if their third request was phil, the follow-up email would confirm phil and list the other two pending courses.
 - On initial request, check if the course has other cross listed CRNs that also should be getting checked.
@@ -72,7 +74,7 @@ npm run unwait
 ## NodeMailer: email
 
 - [Quick start](https://www.w3schools.com/nodejs/nodejs_email.asp)
-- In Google Settings, make account available to "Less Secure" apps
+- For Gmail, go into Google Settings and set account as available to "[Less Secure](https://myaccount.google.com/lesssecureapps?pli=1)" apps
 - [Nodemailer message configuration](https://nodemailer.com/message/)
 
 
@@ -80,7 +82,7 @@ npm run unwait
 
 - [Outbound call quickstart](https://www.twilio.com/docs/voice/quickstart/node?code-sample=code-make-an-outbound-call&code-language=Node.js&code-sdk-version=3.x)
 - [Text to speech docs](https://www.twilio.com/docs/voice/twiml/say/text-speech)
-- [Twimlet Echo, URL builder](https://www.twilio.com/labs/twimlets/echo) - be sure to use the <Response> and <Say> hierarchy
+- [Twimlet Echo, URL builder](https://www.twilio.com/labs/twimlets/echo) - be sure to manually write out <Response> and <Say> nesting
 
 
 ## Axios: webpage loading
@@ -111,7 +113,6 @@ npm run unwait
 - Reading can be done by cells or rows, but rows seems to make the context more easily understood
 - Writing is done simply with the assignment operator to a given cell, but this must be followed by `row.save()`
 - Caution: don't fully understand this, but it seems to ensure a save ONLY when it is the last statement to be evaluated in a function. You can force a save to happen immediately with `await promisify(row.save)()` instead of `row.save()`. My experience otherwise has been that it will end the function wherever you call promisify from.
-
 
 
 
