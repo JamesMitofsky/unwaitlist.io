@@ -278,7 +278,7 @@ async function confirmRequest(row, rowsOfStaticCourseInfo) {
 
         // declare email contents
         let emailSubject = "Unwaitlist Confirmation"
-        let emailBody = `Sorry for the delay - was just bopping through the code.
+        let emailBody = `Sorry for the delay - I was just bopping through the code.
         <br/><br/>
         Unwaitlist is now checking your course: <a href="https://www.uvm.edu/academics/courses/?term=202009&crn=${row.courseregistrationnumber}">${courseName}</a>
         <br/><br/>
@@ -367,8 +367,8 @@ async function getCourseInfo(csvLink) {
             // give simple names for composed variables
             let currentCRN = await csvRowCells[i][3].trim()
             let currentLink = await baseURL + currentCRN
-            let maxClassSeats = await parseInt(csvRowCells[i][8].trim())
-            let numOfStudentsEnrolled = await parseInt(csvRowCells[i][9].trim())
+            let maxClassSeats = await parseInt(csvRowCells[i][9].trim())
+            let numOfStudentsEnrolled = await parseInt(csvRowCells[i][10].trim())
 
             // start working with object
             allCourses[courseListPosition] = {
