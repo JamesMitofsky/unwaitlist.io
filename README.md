@@ -7,7 +7,7 @@ Gotta scrape 'n send that waitlist info: __unwaitlist.io__
 ### Install NPM packages
 
 ```bash
-npm i require cheerio nodemailer twilio dotenv googleapis@39 google-spreadsheet
+npm i require axios nodemailer twilio dotenv googleapis@39 google-spreadsheet
 ```
 
 
@@ -16,9 +16,11 @@ npm i require cheerio nodemailer twilio dotenv googleapis@39 google-spreadsheet
 With config info for twilio
 
 ```ini
-# twilio
+# email creds
 EMAIL_USER=youemail@domain.com
 EMAIL_PASS=***
+
+# twilio auth
 TWILIO_SID=***
 TWILIO_TOKEN=***
 
@@ -26,7 +28,7 @@ TWILIO_TOKEN=***
 type=***
 project_id=***
 private_key_id=***
-private_key=-----BEGIN PRIVATE KEY-----\***
+private_key=-----BEGIN PRIVATE KEY-----\***\n-----END PRIVATE KEY-----\n
 client_email=***
 client_id=***
 auth_uri=https://accounts.google.com/o/oauth2/auth
@@ -40,11 +42,16 @@ client_x509_cert_url=***
 
 - Here's a Google Spreadsheet for testing: [this google sheet](https://docs.google.com/spreadsheets/d/1wtHWjTTWn9LNp4r8_xJiGGiO-YV4PsoQ_gWTeahbUxs/edit?usp=sharing)
 - To start the program, you can run the following command, thanks to [NPM Scripts](https://www.freecodecamp.org/news/introduction-to-npm-scripts-1dbb2ae01633/)
-- You'll also have to either import the current semester's course data to the spreadsheet or comment out that function
 
 ```bash
 npm run unwait
 ```
+
+### Once Semester Maintenance
+- Update all link pre-fixes that get sent to users via email. Based off UVM's public facing [course catalog](https://www.uvm.edu/academics/courses/).
+- Update the link to the registrar's page.
+- Make sure Twilio has sufficient funds to continue messaging users
+- Download the current courses (either [fall](https://giraffe.uvm.edu/~rgweb/batch/curr_enroll_fall.html) or [spring](https://giraffe.uvm.edu/~rgweb/batch/curr_enroll_spring.txt)) as an Excel file (or use text-splitting in gSheets). Then copy/paste them into the Course Data tab of the Google Spreadsheet.
 
 
 # Project Resource Catalog
@@ -58,6 +65,7 @@ npm run unwait
 ## Azure Functions: free, cloud-based execution
 
 - [Timer function](https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-timer)
+- Install dependencies under the console tab found at the bottom of your Azure function portal
 - [KUDU debug console for adding dependencies](https://blogs.msdn.microsoft.com/benjaminperkins/2014/03/24/using-kudu-with-windows-azure-web-sites/)
     1. select function
     2. platform features

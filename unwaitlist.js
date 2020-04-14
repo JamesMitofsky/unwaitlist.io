@@ -278,9 +278,7 @@ async function confirmRequest(row, rowsOfStaticCourseInfo) {
 
         // declare email contents
         let emailSubject = "Unwaitlist Confirmation"
-        let emailBody = `Sorry for the delay - I was just bopping through the code.
-        <br/><br/>
-        Unwaitlist is now checking your course: <a href="https://www.uvm.edu/academics/courses/?term=202009&crn=${row.courseregistrationnumber}">${courseName}</a>
+        let emailBody = `Unwaitlist is now checking your course: <a href="https://www.uvm.edu/academics/courses/?term=202009&crn=${row.courseregistrationnumber}">${courseName}</a>
         <br/><br/>
         <img height="350" src="https://unwaitlist.io/email_assets/PNGs/confirmation_sent.png" alt="Gallant unicorn image">`
         let emailRecipient = row.email
@@ -316,7 +314,7 @@ function checkIsAvailable(row, rowsOfStaticCourseInfo, openCourses, CRN) {
         // declare email contents
         let courseName = rowOfCourseName.title
         let cellNumber = row.phonenumber
-        let textMsg = `Your Course is Open! Here's the CRN: ${row.courseregistrationnumber}`
+        let textMsg = `"${courseName}" is now open! Here's the CRN: ${row.courseregistrationnumber}`
         let emailRecipient = row.email
         let emailSubject = "Your Course is Open!"
         let emailBody = `Your class, <a href="https://www.uvm.edu/academics/courses/?term=202009&crn=${row.courseregistrationnumber}">${courseName}</a>, now has availability.
