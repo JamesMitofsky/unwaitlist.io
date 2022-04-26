@@ -54,15 +54,15 @@ npm run unwait
 - Download the current courses (either [fall](https://giraffe.uvm.edu/~rgweb/batch/curr_enroll_fall.html) or [spring](https://giraffe.uvm.edu/~rgweb/batch/curr_enroll_spring.txt)) as an Excel file (or use text-splitting in gSheets). Then copy/paste them into the Course Data tab of the Google Spreadsheet.
 
 
-# Project Resource Catalog
+## Project Resource Catalog
 
-## TODO
+### TODO
 **Issues requiring immediate attention are flagged in the code by "TODO"**
 
 - List all classes being checked each time user requests another course. For example, if their third request was phil, the follow-up email would confirm phil and list the other two pending courses.
 - On initial request, check if the course has other cross listed CRNs that also should be getting checked.
 
-## Azure Functions: free, cloud-based execution
+### Azure Functions: free, cloud-based execution
 
 - [Timer function](https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-timer)
 - Install dependencies under the console tab found at the bottom of your Azure function portal
@@ -79,26 +79,26 @@ npm run unwait
     4. add as application setting (as deployment)
 
 
-## NodeMailer: email
+### NodeMailer: email
 
 - [Quick start](https://www.w3schools.com/nodejs/nodejs_email.asp)
 - For Gmail, go into Google Settings and set account as available to "[Less Secure](https://myaccount.google.com/lesssecureapps?pli=1)" apps
 - [Nodemailer message configuration](https://nodemailer.com/message/)
 
 
-## Twilio: web-based phone calls
+### Twilio: web-based phone calls
 
 - [Outbound call quickstart](https://www.twilio.com/docs/voice/quickstart/node?code-sample=code-make-an-outbound-call&code-language=Node.js&code-sdk-version=3.x)
 - [Text to speech docs](https://www.twilio.com/docs/voice/twiml/say/text-speech)
 - [Twimlet Echo, URL builder](https://www.twilio.com/labs/twimlets/echo) - be sure to manually write out <Response> and <Say> nesting
 
 
-## Axios: webpage loading
+### Axios: webpage loading
 - make promise based http requests
 - won't render any javascript based changes
 
 
-## dotenv: protecting sensitive variables
+### dotenv: protecting sensitive variables
 
 - Create .env file in root directory
 - Declare sensative values as, "NAME=VALUE" (without quotes & each assignment receiving its own line)
@@ -106,17 +106,15 @@ npm run unwait
 - https://www.npmjs.com/package/dotenv
 - [bug in newline support](https://github.com/motdotla/dotenv/issues/218#issuecomment-325044380)
 
-## Google Sheets API: user management
+### Google Sheets API: user management
 
-### Sheets Setup
+#### Sheets Setup
 
 - Online, visit the [Google Dev Console](https://console.developers.google.com/apis/dashboard) and create a service worker
 - Share your spreadsheet with the service worker's email
 - Here's a Google Spreadsheet for testing: [this google sheet](https://docs.google.com/spreadsheets/d/1wtHWjTTWn9LNp4r8_xJiGGiO-YV4PsoQ_gWTeahbUxs/edit?usp=sharing)
 
-
-
-### Usage
+#### Usage
 
 - Reading can be done by cells or rows, but rows seems to make the context more easily understood
 - Writing is done simply with the assignment operator to a given cell, but this must be followed by `row.save()`
@@ -124,11 +122,11 @@ npm run unwait
 
 
 
-# Code Styles / Conventions
+## Code Styles / Conventions
 
 
 
-## Decrease Cyclomatic Complexity
+### Decrease Cyclomatic Complexity
 
 * Cyclomatic Complexity - number of different possible paths, level of nesting, indentation
 
@@ -152,7 +150,7 @@ if (someCondition) {
 ```
 
 
-## Scope based naming
+### Scope based naming
 * Variable name length can get smaller as you limit the scope of that variable
 
 **Example**:
@@ -162,7 +160,7 @@ cosnt USER_ROW_INFO = ""
 let row = allRows.find(r => r.id === ID)
 ```
 
-## JavaScript Brackets
+### JavaScript Brackets
 
 For guarded if statements, use brackets (just as style convention)
 
@@ -171,7 +169,7 @@ if (!duplicateRow) return true      // bad
 if (!duplicateRow) { return true }  // good
 ```
 
-## Avoid Yoda Conditions
+### Avoid Yoda Conditions
 
 Try to place the target of the investigation as the first term/expression in a comparison operator
 
@@ -179,14 +177,14 @@ Try to place the target of the investigation as the first term/expression in a c
 
 * Bad:  `7 === x` - reads as "Does 7 equal x?"
 
-## Frame Booleans Affirmatively
+### Frame Booleans Affirmatively
 
 * Boolean Values should always be verb questions that have yes/no answer (ex. `isRegNumInvalid`)
   * Preference for interpretation should be default is false
   * State things in the affirmative ex. prefer `IsTrue` to `IsUntrue`
 
 
-## JavaScript Array Examples
+### JavaScript Array Examples
 
 ```js
 var array = [{compnum: "13113"}, {compnum: "45345"}, {compnum: "34534"}]
