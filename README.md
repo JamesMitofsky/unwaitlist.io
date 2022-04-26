@@ -1,6 +1,6 @@
 # unwaitlist
 
-Gotta scrape 'n send that waitlist info: __unwaitlist.io__
+Gotta scrape 'n send that waitlist info! Allowing University of Vermont students to subscribe for notification of when their course of interest has availability.
 
 ## Setup
 
