@@ -1,6 +1,6 @@
 # unwaitlist
 
-Gotta scrape 'n send that waitlist https://unwaitlist.netlify.app/unwaitlist-preview.pnginfo! Allowing University of Vermont students to subscribe for notification of when their course of interest has availability.
+Gotta scrape 'n send that waitlist! Allowing University of Vermont students to subscribe for notification of when their course of interest has availability.
 
 ![](https://unwaitlist.netlify.app/unwaitlist-preview.png)
 
